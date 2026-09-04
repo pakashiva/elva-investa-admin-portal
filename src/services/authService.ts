@@ -1,42 +1,75 @@
+import { ADMIN_SESSION_KEY, type PortalSession } from '../lib/authConfig';
 import { supabase } from '../lib/supabase';
-import type { AdminMe } from '../types/admin';
 import { parseRpcError } from '../utils/format';
 
-export async function signInAdmin(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email: email.trim().toLowerCase(),
-    password,
+export function readPortalSession(): PortalSession | null {
+  try {
+    const raw = localStorage.getItem(ADMIN_SESSION_KEY);
+    if (!raw) {
+      return null;
+    }
+    const parsed = JSON.parse(raw) as PortalSession;
+    if (!parsed?.username) {
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+export function writePortalSession(username: string): PortalSession {
+  const session: PortalSession = {
+    username,
+    loggedInAt: new Date().toISOString(),
+  };
+  localStorage.setItem(ADMIN_SESSION_KEY, JSON.stringify(session));
+  return session;
+}
+
+export function clearPortalSession() {
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+export async function portalLogin(username: string, password: string): Promise<PortalSession> {
+  const { data, error } = await supabase.rpc('admin_portal_login', {
+    p_username: username.trim(),
+    p_password: password,
   });
-
-  if (error) {
-    throw new Error(
-      error.message.toLowerCase().includes('invalid login credentials')
-        ? 'Invalid email or password.'
-        : error.message
-    );
-  }
-
-  return data.session;
-}
-
-export async function signOutAdmin() {
-  const { error } = await supabase.auth.signOut();
-  if (error) {
-    throw new Error(error.message);
-  }
-}
-
-export async function getAdminMe(): Promise<AdminMe> {
-  const { data, error } = await supabase.rpc('admin_get_me');
 
   if (error) {
     throw new Error(parseRpcError(error));
   }
 
-  const row = data as AdminMe | null;
-  if (!row?.user_id) {
-    throw new Error('This account is not authorized for the Admin Portal.');
+  const row = (data ?? {}) as { ok?: boolean; username?: string };
+  if (!row.ok || !row.username) {
+    throw new Error('Invalid username or password.');
   }
 
-  return row;
+  return writePortalSession(row.username);
+}
+
+export async function portalChangePassword(
+  username: string,
+  oldPassword: string,
+  newPassword: string
+): Promise<void> {
+  const { data, error } = await supabase.rpc('admin_portal_change_password', {
+    p_username: username.trim(),
+    p_old_password: oldPassword,
+    p_new_password: newPassword,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as { ok?: boolean };
+  if (!row.ok) {
+    throw new Error('Unable to update password.');
+  }
+}
+
+export function portalSignOut() {
+  clearPortalSession();
 }

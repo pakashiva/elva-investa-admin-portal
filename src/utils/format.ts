@@ -268,10 +268,21 @@ export function firstName(fullName: string): string {
 export function parseRpcError(error: unknown): string {
   if (error && typeof error === 'object' && 'message' in error) {
     const message = String((error as { message: string }).message);
-    if (message.toLowerCase().includes('not authorized')) {
+    const lower = message.toLowerCase();
+    if (lower.includes('not authorized')) {
       return 'This account is not authorized for the Admin Portal.';
     }
-    if (message.toLowerCase().includes('function') && message.toLowerCase().includes('does not exist')) {
+    // PostgREST: missing RPC in API schema cache / not created yet
+    if (
+      (lower.includes('could not find the function') || lower.includes('rpc')) &&
+      (lower.includes('does not exist') || lower.includes('not found'))
+    ) {
+      return 'Required admin database functions are missing. Run the latest files in supabase/migrations/ in the Supabase SQL Editor.';
+    }
+    if (
+      lower.includes('function public.admin_') &&
+      lower.includes('does not exist')
+    ) {
       return 'Required admin database functions are missing. Run the latest files in supabase/migrations/ in the Supabase SQL Editor.';
     }
     return message;

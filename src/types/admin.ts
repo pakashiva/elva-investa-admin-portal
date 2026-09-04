@@ -348,4 +348,20 @@ export type AdminNotification = {
   unread: boolean;
 };
 
+export type PortalSettings = {
+  platform_name: string;
+  support_email: string;
+  support_phone: string;
+  default_currency: string;
+  min_investment_amount: number;
+  max_investment_amount: number;
+  gateway_provider: string;
+  merchant_id: string;
+  api_key: string;
+  api_secret: string;
+  max_single_transaction: number;
+  daily_transfer_limit: number;
+  updated_at: string | null;
+};
+
 

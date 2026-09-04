@@ -9,6 +9,7 @@ import {
   FileBarChart,
   Bell,
   Settings,
+  KeyRound,
   LogOut,
   Menu,
 } from 'lucide-react';
@@ -24,6 +25,7 @@ const NAV_ITEMS = [
   { to: '/reports', label: 'Reports', end: false },
   { to: '/notifications', label: 'Notifications', end: false },
   { to: '/settings', label: 'Settings', end: false },
+  { to: '/manage-passwords', label: 'Manage Passwords', end: false },
 ] as const;
 
 const ICONS = {
@@ -36,6 +38,7 @@ const ICONS = {
   Reports: FileBarChart,
   Notifications: Bell,
   Settings: Settings,
+  'Manage Passwords': KeyRound,
 } as const;
 
 type SidebarProps = {

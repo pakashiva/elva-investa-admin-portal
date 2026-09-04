@@ -1,18 +1,17 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { SKIP_ADMIN_AUTH } from '../lib/authConfig';
 import { AdminLayout } from '../layouts/AdminLayout';
 import { CustomersPage } from '../pages/CustomersPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { InvestmentRequestsPage } from '../pages/InvestmentRequestsPage';
 import { InvestmentReviewPage } from '../pages/InvestmentReviewPage';
 import { LoginPage } from '../pages/LoginPage';
+import { ManagePasswordsPage } from '../pages/ManagePasswordsPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
-import { PlaceholderPage } from '../pages/PlaceholderPage';
 import { ReferralsPage } from '../pages/ReferralsPage';
 import { ReportsPage } from '../pages/ReportsPage';
+import { SettingsPage } from '../pages/SettingsPage';
 import { TdsPage } from '../pages/TdsPage';
-import { UnauthorizedPage } from '../pages/UnauthorizedPage';
 import { WithdrawalsPage } from '../pages/WithdrawalsPage';
 
 function FullPageLoading() {
@@ -39,10 +38,8 @@ function PortalRoutes() {
         <Route path="/referrals" element={<ReferralsPage />} />
         <Route path="/reports" element={<ReportsPage />} />
         <Route path="/notifications" element={<NotificationsPage />} />
-        <Route
-          path="/settings"
-          element={<PlaceholderPage title="Settings" subtitle="Portal configuration" />}
-        />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/manage-passwords" element={<ManagePasswordsPage />} />
       </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -53,10 +50,6 @@ function PortalRoutes() {
 export function AppRoutes() {
   const { status } = useAuth();
 
-  if (SKIP_ADMIN_AUTH) {
-    return <PortalRoutes />;
-  }
-
   if (status === 'loading') {
     return <FullPageLoading />;
   }
@@ -66,14 +59,6 @@ export function AppRoutes() {
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
-  }
-
-  if (status === 'unauthorized') {
-    return (
-      <Routes>
-        <Route path="*" element={<UnauthorizedPage />} />
       </Routes>
     );
   }

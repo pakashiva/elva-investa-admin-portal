@@ -7,121 +7,81 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import type { Session } from '@supabase/supabase-js';
-import { SKIP_ADMIN_AUTH } from '../lib/authConfig';
-import { supabase } from '../lib/supabase';
-import { getAdminMe, signOutAdmin } from '../services/authService';
+import {
+  portalLogin,
+  portalSignOut,
+  readPortalSession,
+} from '../services/authService';
 import type { AdminMe } from '../types/admin';
 
-type AuthStatus = 'loading' | 'anonymous' | 'unauthorized' | 'admin';
+type AuthStatus = 'loading' | 'anonymous' | 'admin';
 
 type AuthContextValue = {
   status: AuthStatus;
-  session: Session | null;
   admin: AdminMe | null;
   error: string | null;
+  signIn: (username: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
-const DEV_ADMIN: AdminMe = {
-  user_id: 'dev-bypass',
-  role: 'operator',
-  full_name: 'Developer',
-  email: null,
-};
+function toAdmin(username: string): AdminMe {
+  return {
+    user_id: username,
+    role: 'super_admin',
+    full_name: username,
+    email: null,
+  };
+}
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [admin, setAdmin] = useState<AdminMe | null>(SKIP_ADMIN_AUTH ? DEV_ADMIN : null);
-  const [status, setStatus] = useState<AuthStatus>(SKIP_ADMIN_AUTH ? 'admin' : 'loading');
+  const [admin, setAdmin] = useState<AdminMe | null>(null);
+  const [status, setStatus] = useState<AuthStatus>('loading');
   const [error, setError] = useState<string | null>(null);
 
-  const resolveSession = useCallback(async (nextSession: Session | null) => {
-    if (SKIP_ADMIN_AUTH) {
-      setSession(nextSession);
-      setAdmin(DEV_ADMIN);
+  const refresh = useCallback(async () => {
+    const session = readPortalSession();
+    if (session) {
+      setAdmin(toAdmin(session.username));
       setStatus('admin');
       setError(null);
       return;
     }
-
-    setSession(nextSession);
+    setAdmin(null);
+    setStatus('anonymous');
     setError(null);
-
-    if (!nextSession) {
-      setAdmin(null);
-      setStatus('anonymous');
-      return;
-    }
-
-    try {
-      const me = await getAdminMe();
-      setAdmin(me);
-      setStatus('admin');
-    } catch (err) {
-      setAdmin(null);
-      setStatus('unauthorized');
-      setError(err instanceof Error ? err.message : 'Not authorized');
-    }
   }, []);
 
   useEffect(() => {
-    if (SKIP_ADMIN_AUTH) {
-      return;
-    }
+    void refresh();
+  }, [refresh]);
 
-    let mounted = true;
-
-    supabase.auth.getSession().then(({ data }) => {
-      if (mounted) {
-        void resolveSession(data.session);
-      }
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      void resolveSession(nextSession);
-    });
-
-    return () => {
-      mounted = false;
-      subscription.unsubscribe();
-    };
-  }, [resolveSession]);
-
-  const signOut = useCallback(async () => {
-    if (SKIP_ADMIN_AUTH) {
-      return;
-    }
-    await signOutAdmin();
-    setAdmin(null);
-    setStatus('anonymous');
+  const signIn = useCallback(async (username: string, password: string) => {
+    setError(null);
+    const session = await portalLogin(username, password);
+    setAdmin(toAdmin(session.username));
+    setStatus('admin');
   }, []);
 
-  const refresh = useCallback(async () => {
-    if (SKIP_ADMIN_AUTH) {
-      setAdmin(DEV_ADMIN);
-      setStatus('admin');
-      return;
-    }
-    const { data } = await supabase.auth.getSession();
-    await resolveSession(data.session);
-  }, [resolveSession]);
+  const signOut = useCallback(async () => {
+    portalSignOut();
+    setAdmin(null);
+    setStatus('anonymous');
+    setError(null);
+  }, []);
 
   const value = useMemo(
     () => ({
       status,
-      session,
       admin,
       error,
+      signIn,
       signOut,
       refresh,
     }),
-    [status, session, admin, error, signOut, refresh]
+    [status, admin, error, signIn, signOut, refresh]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

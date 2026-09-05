@@ -15,7 +15,7 @@ export type DashboardKpis = {
   interestPaidYtd: number;
   tdsDeductedYtd: number;
   totalWithdrawals: number;
-  verifiedCustomers: number;
+  totalCustomers: number;
   newRegistrationsThisWeek: number;
   pendingRequests: number;
   pendingInvestments: number;
@@ -105,7 +105,6 @@ export type CustomerBankAccount = {
   ifsc_code: string;
   account_type: string;
   is_primary: boolean;
-  verified: boolean;
 };
 
 export type CustomerLedgerStatus = 'Completed' | 'Pending';
@@ -121,7 +120,6 @@ export type CustomerLedgerRow = {
 
 export type CustomerDetails = {
   profile: CustomerProfile;
-  kyc_verified: boolean;
   account_active: boolean;
   summary: {
     total_invested: number;
@@ -178,14 +176,12 @@ export type InvestmentRequestDetail = {
   user_id: string;
   customer_name: string;
   customer_id: string | null;
-  kyc_verified: boolean;
   active_portfolio: number;
   active_plans: number;
   bank: {
     bank_name: string;
     account_number: string;
     ifsc_code: string;
-    verified: boolean;
   } | null;
 };
 

@@ -69,7 +69,7 @@ export function DashboardPage() {
             />
             <KpiCard
               label="TOTAL CUSTOMERS"
-              value={`${data.kpis.verifiedCustomers.toLocaleString('en-IN')} Verified`}
+              value={data.kpis.totalCustomers.toLocaleString('en-IN')}
               subtext={`${formatSignedCount(data.kpis.newRegistrationsThisWeek)} new registrations`}
             />
             <KpiCard

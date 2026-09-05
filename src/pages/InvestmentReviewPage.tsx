@@ -126,14 +126,7 @@ export function InvestmentReviewPage() {
                 <img className="avatar" src="/avatar.png" alt="" />
                 <div>
                   <strong>{detail.customer_name}</strong>
-                  <p>
-                    Customer ID: {displayCustomerId(detail.customer_id)}
-                    {detail.kyc_verified ? (
-                      <span className="status-pill verified">KYC VERIFIED</span>
-                    ) : (
-                      <span className="status-pill pending">KYC PENDING</span>
-                    )}
-                  </p>
+                  <p>Customer ID: {displayCustomerId(detail.customer_id)}</p>
                 </div>
               </div>
               <div className="detail-grid">
@@ -169,10 +162,7 @@ export function InvestmentReviewPage() {
                     <strong>
                       {detail.bank.bank_name} (Acct ending **{last4Account(detail.bank.account_number)})
                     </strong>
-                    <p>
-                      IFSC: {detail.bank.ifsc_code} •{' '}
-                      {detail.bank.verified ? 'PENNY TESTED SUCCESSFUL' : 'PENDING VERIFICATION'}
-                    </p>
+                    <p>IFSC: {detail.bank.ifsc_code}</p>
                   </>
                 ) : (
                   <p>No bank account linked.</p>

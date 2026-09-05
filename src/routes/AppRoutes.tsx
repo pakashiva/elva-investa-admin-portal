@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AdminLayout } from '../layouts/AdminLayout';
+import { ContactOpsPage } from '../pages/ContactOpsPage';
 import { CustomersPage } from '../pages/CustomersPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { InvestmentRequestsPage } from '../pages/InvestmentRequestsPage';
@@ -40,6 +41,7 @@ function PortalRoutes() {
         <Route path="/notifications" element={<NotificationsPage />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/manage-passwords" element={<ManagePasswordsPage />} />
+        <Route path="/contact-ops" element={<ContactOpsPage />} />
       </Route>
       <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -94,7 +94,6 @@ export async function getInvestmentRequest(
     user_id: String(row.user_id ?? ''),
     customer_name: String(row.customer_name ?? ''),
     customer_id: row.customer_id ? String(row.customer_id) : null,
-    kyc_verified: Boolean(row.kyc_verified),
     active_portfolio: asNumber(row.active_portfolio),
     active_plans: asNumber(row.active_plans),
     bank: bank
@@ -102,7 +101,6 @@ export async function getInvestmentRequest(
           bank_name: String(bank.bank_name ?? ''),
           account_number: String(bank.account_number ?? ''),
           ifsc_code: String(bank.ifsc_code ?? ''),
-          verified: Boolean(bank.verified),
         }
       : null,
   };

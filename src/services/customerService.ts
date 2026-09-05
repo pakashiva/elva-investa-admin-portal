@@ -88,7 +88,6 @@ function mapBank(row: Record<string, unknown>): CustomerBankAccount {
     ifsc_code: String(row.ifsc_code ?? ''),
     account_type: String(row.account_type ?? 'Savings'),
     is_primary: Boolean(row.is_primary),
-    verified: Boolean(row.verified),
   };
 }
 
@@ -127,7 +126,6 @@ export async function getCustomerDetails(userId: string): Promise<CustomerDetail
 
   return {
     profile: mapProfile(profile),
-    kyc_verified: Boolean(payload.kyc_verified),
     account_active: Boolean(payload.account_active),
     summary: {
       total_invested: asNumber(summary.total_invested),

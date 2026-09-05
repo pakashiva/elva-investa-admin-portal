@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom';
+import { Link, NavLink } from 'react-router-dom';
 import {
   LayoutDashboard,
   Users,
@@ -79,18 +79,20 @@ export function Sidebar({ open, onClose }: SidebarProps) {
           })}
         </nav>
 
-        <div className="ops-card">
-          <strong>Operations Support</strong>
-          <p>Escalations and portal issues</p>
-          <a className="gold-btn" href="mailto:support@roxrufinancial.in">
-            Contact Ops Dev
-          </a>
-        </div>
+        <div className="sidebar-footer">
+          <div className="ops-card">
+            <strong>Operations Support</strong>
+            <p>Escalations and portal issues</p>
+            <Link className="gold-btn" to="/contact-ops" onClick={onClose}>
+              Contact Ops Dev
+            </Link>
+          </div>
 
-        <button type="button" className="logout-btn" onClick={() => void signOut()}>
-          <LogOut size={16} />
-          Logout
-        </button>
+          <button type="button" className="logout-btn" onClick={() => void signOut()}>
+            <LogOut size={16} />
+            Logout
+          </button>
+        </div>
       </aside>
     </>
   );

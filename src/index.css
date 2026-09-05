@@ -66,13 +66,25 @@ a {
   top: 0;
   height: 100vh;
   flex-shrink: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.sidebar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }
 
 .sidebar-brand {
   display: flex;
   gap: 12px;
   align-items: center;
-  padding: 0 8px 28px;
+  padding: 0 8px 20px;
+  flex: 0 0 auto;
 }
 
 .sidebar-brand img {
@@ -106,7 +118,8 @@ a {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  flex: 1;
+  /* Grow when short; never shrink below content so the sidebar can scroll */
+  flex: 1 0 auto;
 }
 
 .nav-link {
@@ -137,12 +150,25 @@ a {
   flex-shrink: 0;
 }
 
+.sidebar-footer {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 0;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 0 0 auto;
+}
+
 .ops-card {
   background: #101c33;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 12px;
   padding: 14px;
-  margin-top: 16px;
+  margin: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .ops-card p {
@@ -171,6 +197,7 @@ a {
   display: block;
   text-align: center;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .gold-btn:hover {
@@ -178,18 +205,19 @@ a {
 }
 
 .logout-btn {
-  margin-top: 12px;
+  margin-top: 0;
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   background: transparent;
   border: 0;
   color: #c5cedd;
   padding: 10px 12px;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 14px;
+  box-sizing: border-box;
 }
 
 .logout-btn:hover {
@@ -2064,4 +2092,67 @@ a {
   .settings-save {
     width: 100%;
   }
+}
+
+.contact-ops-card {
+  max-width: 720px;
+}
+
+.contact-ops-intro {
+  margin: -8px 0 20px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.contact-ops-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.contact-ops-link {
+  display: grid;
+  grid-template-columns: 40px 1fr 16px;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #f7f8fb;
+  text-decoration: none;
+  color: var(--text);
+}
+
+.contact-ops-link:hover {
+  border-color: #c7a13a;
+  background: #fff;
+}
+
+.contact-ops-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--navy);
+  color: var(--gold);
+  display: grid;
+  place-items: center;
+}
+
+.contact-ops-link strong {
+  display: block;
+  font-size: 14px;
+}
+
+.contact-ops-link small {
+  display: block;
+  margin-top: 2px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.contact-ops-open {
+  color: #9aa6bb;
 }

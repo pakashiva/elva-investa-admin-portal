@@ -20,26 +20,6 @@ type Props = {
   onNavigate: (userId: string) => void;
 };
 
-function StatusBadge({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string;
-  tone: 'verified' | 'pending' | 'inactive';
-}) {
-  return (
-    <div className="status-pair">
-      <span className="status-pair-label">{label}</span>
-      <span className={`status-pill ${tone}`}>
-        <i />
-        {value}
-      </span>
-    </div>
-  );
-}
-
 function Field({ label, value }: { label: string; value: string }) {
   return (
     <div className="detail-field">
@@ -112,19 +92,6 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
           <div className="state-box">{isLoading ? 'Loading customer…' : 'Customer not found'}</div>
         ) : (
           <>
-            <div className="status-row">
-              <StatusBadge
-                label="KYC Status"
-                value={data.kyc_verified ? 'Verified' : 'Pending'}
-                tone={data.kyc_verified ? 'verified' : 'pending'}
-              />
-              <StatusBadge
-                label="Account Status"
-                value={data.account_active ? 'Active' : 'Inactive'}
-                tone={data.account_active ? 'verified' : 'inactive'}
-              />
-            </div>
-
             {tab === 'profile' ? (
               <div className="detail-stack">
                 <article className="detail-card">
@@ -186,10 +153,6 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
                         <Field label="IFSC CODE" value={bank.ifsc_code || '—'} />
                         <Field label="ACCOUNT TYPE" value={bank.account_type || '—'} />
                       </div>
-                      <span className={`status-pill ${bank.verified ? 'verified' : 'pending'}`}>
-                        <i />
-                        {bank.verified ? 'Verified' : 'Pending'}
-                      </span>
                     </article>
                   ))
                 )}

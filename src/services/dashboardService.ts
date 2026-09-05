@@ -28,7 +28,7 @@ export async function getDashboard(months: ChartRangeMonths): Promise<DashboardD
       interestPaidYtd: asNumber(kpis.interestPaidYtd),
       tdsDeductedYtd: asNumber(kpis.tdsDeductedYtd),
       totalWithdrawals: asNumber(kpis.totalWithdrawals),
-      verifiedCustomers: asNumber(kpis.verifiedCustomers),
+      totalCustomers: asNumber(kpis.totalCustomers ?? kpis.verifiedCustomers),
       newRegistrationsThisWeek: asNumber(kpis.newRegistrationsThisWeek),
       pendingRequests: asNumber(kpis.pendingRequests),
       pendingInvestments: asNumber(kpis.pendingInvestments),

@@ -7,11 +7,13 @@ import { useNotifications } from '../hooks/useNotifications';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import {
   markAllNotificationsRead,
+  notificationBody,
+  notificationTitle,
   notifyNotificationsChanged,
   setNotificationRead,
 } from '../services/notificationService';
 import type { AdminNotification, NotificationFilter, NotificationKind } from '../types/admin';
-import { formatInr, formatRelativeTime } from '../utils/format';
+import { formatRelativeTime } from '../utils/format';
 
 const FILTERS: { id: NotificationFilter; label: string }[] = [
   { id: 'all', label: 'All' },
@@ -20,26 +22,6 @@ const FILTERS: { id: NotificationFilter; label: string }[] = [
   { id: 'withdrawal', label: 'Withdrawals' },
   { id: 'customer', label: 'New Customers' },
 ];
-
-function titleFor(row: AdminNotification): string {
-  if (row.kind === 'investment') {
-    return `New investment request from ${row.customer_name} - ${formatInr(row.amount ?? 0)} in ${row.plan_name || 'New Fund Request'}`;
-  }
-  if (row.kind === 'withdrawal') {
-    return `Withdrawal request from ${row.customer_name} - ${formatInr(row.amount ?? 0)}`;
-  }
-  return `New customer registered: ${row.customer_name}`;
-}
-
-function bodyFor(row: AdminNotification): string {
-  if (row.kind === 'investment') {
-    return 'Review and approve the request to proceed with allocation.';
-  }
-  if (row.kind === 'withdrawal') {
-    return 'Awaiting approval for payout to the linked bank account.';
-  }
-  return 'Profile created. Review customer details if needed.';
-}
 
 export function NotificationsPage() {
   const { onOpenMenu } = useOutletContext<AdminOutletContext>();
@@ -185,8 +167,8 @@ export function NotificationsPage() {
                     )}
                   </span>
                   <span className="notice-copy">
-                    <strong>{titleFor(row)}</strong>
-                    <em>{bodyFor(row)}</em>
+                    <strong>{notificationTitle(row)}</strong>
+                    <em>{notificationBody(row)}</em>
                   </span>
                   <span className="notice-meta">
                     <span>{formatRelativeTime(row.occurred_at)}</span>

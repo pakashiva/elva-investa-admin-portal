@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Calendar, Search } from 'lucide-react';
 import { useNavigate, useOutletContext, useParams, useSearchParams } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
+import { CreateCustomerModal } from '../components/CreateCustomerModal';
 import { CustomerDetailsModal } from '../components/CustomerDetailsModal';
 import { EmptyState, ErrorBanner } from '../components/States';
 import { useCustomers } from '../hooks/useCustomers';
@@ -61,7 +62,9 @@ export function CustomersPage() {
   const { userId } = useParams();
   const [searchParams] = useSearchParams();
   const [dateOpen, setDateOpen] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [noticeTone, setNoticeTone] = useState<'info' | 'success'>('info');
 
   useEffect(() => {
     const query = searchParams.get('q');
@@ -82,21 +85,15 @@ export function CustomersPage() {
         subtitle="Manage your Indian investor base"
         onOpenMenu={onOpenMenu}
         actions={
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={() =>
-              setNotice(
-                'Customers currently register through the mobile app. Admin-created accounts will be added with the next screen design.'
-              )
-            }
-          >
+          <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
             + Create Customer
           </button>
         }
       />
 
-      {notice ? <div className="notice-box">{notice}</div> : null}
+      {notice ? (
+        <div className={`notice-box${noticeTone === 'success' ? ' success' : ''}`}>{notice}</div>
+      ) : null}
       {error ? <ErrorBanner message={error} onRetry={() => void reload()} /> : null}
 
       <section className="table-shell">
@@ -252,6 +249,16 @@ export function CustomersPage() {
           onNavigate={(nextId) => navigate(`/customers/${nextId}`)}
         />
       ) : null}
+
+      <CreateCustomerModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={() => {
+          setNoticeTone('success');
+          setNotice('Customer created successfully');
+          void reload();
+        }}
+      />
     </>
   );
 }

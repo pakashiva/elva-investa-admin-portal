@@ -140,3 +140,54 @@ export async function getCustomerDetails(userId: string): Promise<CustomerDetail
       : [],
   };
 }
+
+export type CreateCustomerInput = {
+  fullName: string;
+  email: string;
+  mobile: string;
+  dateOfBirth: string;
+  nomineeName: string;
+  nomineeRelationship: string;
+  address: string;
+  accountHolderName: string;
+  accountNumber: string;
+  ifscCode: string;
+  branchName: string;
+  accountType: 'Savings' | 'Current';
+};
+
+export type CreateCustomerResult = {
+  ok: boolean;
+  user_id: string;
+  customer_id: string | null;
+};
+
+export async function createCustomer(
+  input: CreateCustomerInput
+): Promise<CreateCustomerResult> {
+  const { data, error } = await supabase.rpc('admin_create_customer', {
+    p_full_name: input.fullName,
+    p_email: input.email,
+    p_mobile: input.mobile,
+    p_date_of_birth: input.dateOfBirth,
+    p_nominee_name: input.nomineeName,
+    p_nominee_relationship: input.nomineeRelationship,
+    p_address: input.address,
+    p_account_holder_name: input.accountHolderName,
+    p_account_number: input.accountNumber,
+    p_ifsc_code: input.ifscCode,
+    p_branch_name: input.branchName,
+    p_account_type: input.accountType,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    ok: Boolean(row.ok),
+    user_id: String(row.user_id ?? ''),
+    customer_id: row.customer_id ? String(row.customer_id) : null,
+  };
+}

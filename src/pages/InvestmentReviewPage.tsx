@@ -36,7 +36,6 @@ export function InvestmentReviewPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [payoutDay, setPayoutDay] = useState(10);
   const [decision, setDecision] = useState<InvestmentDecision | null>(null);
 
   const load = async () => {
@@ -60,6 +59,7 @@ export function InvestmentReviewPage() {
   }, [requestId]);
 
   const editable = detail?.status === 'Pending' || detail?.status === 'Under Review';
+  const payoutDay = detail?.payout_day ?? 10;
 
   const preview = useMemo(() => {
     const principal = detail?.fund_amount ?? 0;
@@ -71,15 +71,15 @@ export function InvestmentReviewPage() {
     return { principal, gross, tax, net, maturity: roundMoney(principal + net) };
   }, [detail]);
 
-  async function persistTerms(rate: number, tds: number) {
+  async function persistTerms(rate: number, tds: number, day: number) {
     if (!detail || !editable) {
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await updateInvestmentTerms(detail.id, rate, tds);
-      setDetail({ ...detail, interest_rate: rate, tds_percent: tds });
+      await updateInvestmentTerms(detail.id, rate, tds, day);
+      setDetail({ ...detail, interest_rate: rate, tds_percent: tds, payout_day: day });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save terms');
     } finally {
@@ -184,7 +184,7 @@ export function InvestmentReviewPage() {
                 checked={detail.tds_percent > 0}
                 disabled={!editable || saving}
                 onChange={(event) =>
-                  void persistTerms(detail.interest_rate, event.target.checked ? 0.1 : 0)
+                  void persistTerms(detail.interest_rate, event.target.checked ? 0.1 : 0, payoutDay)
                 }
               />
             </label>
@@ -196,7 +196,7 @@ export function InvestmentReviewPage() {
                 value={detail.interest_rate}
                 disabled={!editable || saving}
                 onChange={(event) =>
-                  void persistTerms(Number(event.target.value), detail.tds_percent)
+                  void persistTerms(Number(event.target.value), detail.tds_percent, payoutDay)
                 }
               >
                 {RATE_OPTIONS.map((rate) => (
@@ -216,7 +216,8 @@ export function InvestmentReviewPage() {
                     key={day}
                     type="button"
                     className={payoutDay === day ? 'active' : ''}
-                    onClick={() => setPayoutDay(day)}
+                    disabled={!editable || saving}
+                    onClick={() => void persistTerms(detail.interest_rate, detail.tds_percent, day)}
                   >
                     {day === 1 ? '1st' : `${day}th`}
                   </button>

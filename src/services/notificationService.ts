@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { AdminNotification, NotificationFilter, NotificationKind } from '../types/admin';
-import { parseRpcError } from '../utils/format';
+import { formatInr, parseRpcError } from '../utils/format';
 
 function asKind(value: unknown): NotificationKind {
   if (value === 'withdrawal' || value === 'customer') {
@@ -21,6 +21,26 @@ function mapRow(row: Record<string, unknown>): AdminNotification {
     href: String(row.href ?? '/'),
     unread: Boolean(row.unread),
   };
+}
+
+export function notificationTitle(row: AdminNotification): string {
+  if (row.kind === 'investment') {
+    return `New investment request from ${row.customer_name} - ${formatInr(row.amount ?? 0)} in ${row.plan_name || 'New Fund Request'}`;
+  }
+  if (row.kind === 'withdrawal') {
+    return `Withdrawal request from ${row.customer_name} - ${formatInr(row.amount ?? 0)}`;
+  }
+  return `New customer registered: ${row.customer_name}`;
+}
+
+export function notificationBody(row: AdminNotification): string {
+  if (row.kind === 'investment') {
+    return 'Review and approve the request to proceed with allocation.';
+  }
+  if (row.kind === 'withdrawal') {
+    return 'Awaiting approval for payout to the linked bank account.';
+  }
+  return 'Profile created. Review customer details if needed.';
 }
 
 export async function listNotifications(params: {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
+import { AddInvestmentModal } from '../components/AddInvestmentModal';
 import { AppHeader } from '../components/AppHeader';
 import { EmptyState, ErrorBanner } from '../components/States';
 import { useInvestmentRequests } from '../hooks/useInvestmentRequests';
@@ -25,6 +26,7 @@ export function InvestmentRequestsPage() {
   const { onOpenMenu } = useOutletContext<AdminOutletContext>();
   const navigate = useNavigate();
   const [notice, setNotice] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
   const requests = useInvestmentRequests();
 
   const rows = requests.result?.rows ?? [];
@@ -40,15 +42,7 @@ export function InvestmentRequestsPage() {
         showSearch
         onOpenMenu={onOpenMenu}
         actions={
-          <button
-            type="button"
-            className="primary-btn"
-            onClick={() =>
-              setNotice(
-                'Fund requests are submitted by investors in the mobile app. Admin creation will be added later.'
-              )
-            }
-          >
+          <button type="button" className="primary-btn" onClick={() => setCreateOpen(true)}>
             + Create Investment Request
           </button>
         }
@@ -164,6 +158,17 @@ export function InvestmentRequestsPage() {
           </div>
         </div>
       </section>
+
+      <AddInvestmentModal
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        onCreated={({ customerId, amount }) => {
+          setNotice(
+            `Investment request created for ${customerId ?? 'customer'} · ${formatInr(amount)}. Status: Pending.`
+          );
+          void requests.reload();
+        }}
+      />
     </>
   );
 }

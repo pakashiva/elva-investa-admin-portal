@@ -90,6 +90,7 @@ export async function getInvestmentRequest(
     fund_amount: asNumber(row.fund_amount),
     interest_rate: asNumber(row.interest_rate),
     tds_percent: asNumber(row.tds_percent),
+    payout_day: asPayoutDay(row.payout_day),
     created_at: String(row.created_at ?? ''),
     user_id: String(row.user_id ?? ''),
     customer_name: String(row.customer_name ?? ''),
@@ -106,15 +107,27 @@ export async function getInvestmentRequest(
   };
 }
 
+const PAYOUT_DAY_OPTIONS = [1, 5, 10, 15, 20, 25] as const;
+
+function asPayoutDay(value: unknown): number {
+  const parsed = Number(value);
+  if (PAYOUT_DAY_OPTIONS.includes(parsed as (typeof PAYOUT_DAY_OPTIONS)[number])) {
+    return parsed;
+  }
+  return 10;
+}
+
 export async function updateInvestmentTerms(
   id: string,
   interestRate: number,
-  tdsPercent: number
+  tdsPercent: number,
+  payoutDay: number
 ): Promise<void> {
   const { error } = await supabase.rpc('admin_update_investment_terms', {
     p_id: id,
     p_interest_rate: interestRate,
     p_tds_percent: tdsPercent,
+    p_payout_day: payoutDay,
   });
 
   if (error) {
@@ -139,5 +152,106 @@ export async function decideInvestment(id: string, action: InvestmentDecision) {
     status: asStatus(row.status),
     fund_amount: asNumber(row.fund_amount),
     action,
+  };
+}
+
+export type CustomerOption = {
+  user_id: string;
+  customer_id: string | null;
+  full_name: string;
+  mobile_number: string;
+  investment_count: number;
+};
+
+export type CustomerBankOption = {
+  id: string;
+  account_number: string;
+  branch_name: string;
+  bank_name: string;
+  ifsc_code: string;
+  account_type: string;
+  is_primary: boolean;
+};
+
+export async function listCustomerOptions(search = ''): Promise<CustomerOption[]> {
+  const { data, error } = await supabase.rpc('admin_list_customer_options', {
+    p_search: search.trim() || null,
+    p_limit: 50,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((item) => {
+    const row = item as Record<string, unknown>;
+    return {
+      user_id: String(row.user_id ?? ''),
+      customer_id: row.customer_id ? String(row.customer_id) : null,
+      full_name: String(row.full_name ?? ''),
+      mobile_number: String(row.mobile_number ?? ''),
+      investment_count: Number(row.investment_count ?? 0) || 0,
+    };
+  });
+}
+
+export async function listCustomerBanks(userId: string): Promise<CustomerBankOption[]> {
+  const { data, error } = await supabase.rpc('admin_list_customer_banks', {
+    p_user_id: userId,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  if (!Array.isArray(data)) {
+    return [];
+  }
+
+  return data.map((item) => {
+    const row = item as Record<string, unknown>;
+    return {
+      id: String(row.id ?? ''),
+      account_number: String(row.account_number ?? ''),
+      branch_name: String(row.branch_name ?? ''),
+      bank_name: String(row.bank_name ?? ''),
+      ifsc_code: String(row.ifsc_code ?? ''),
+      account_type: String(row.account_type ?? ''),
+      is_primary: Boolean(row.is_primary),
+    };
+  });
+}
+
+export type CreateInvestmentInput = {
+  userId: string;
+  amount: number;
+  bankAccountId: string;
+  fundTitle: string;
+};
+
+export async function createInvestmentRequest(input: CreateInvestmentInput) {
+  const { data, error } = await supabase.rpc('admin_create_investment_request', {
+    p_user_id: input.userId,
+    p_amount: input.amount,
+    p_bank_account_id: input.bankAccountId,
+    p_fund_title: input.fundTitle.trim(),
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    ok: Boolean(row.ok),
+    id: String(row.id ?? ''),
+    user_id: String(row.user_id ?? ''),
+    customer_id: row.customer_id ? String(row.customer_id) : null,
+    fund_amount: asNumber(row.fund_amount),
+    status: asStatus(row.status),
   };
 }

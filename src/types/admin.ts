@@ -172,6 +172,7 @@ export type InvestmentRequestDetail = {
   fund_amount: number;
   interest_rate: number;
   tds_percent: number;
+  payout_day: number;
   created_at: string;
   user_id: string;
   customer_name: string;

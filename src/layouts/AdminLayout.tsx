@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { NotificationToastHost } from '../components/NotificationToastHost';
 import { Sidebar } from '../components/Sidebar';
 
 export function AdminLayout() {
@@ -11,6 +12,7 @@ export function AdminLayout() {
       <main className="main">
         <Outlet context={{ onOpenMenu: () => setMenuOpen(true) }} />
       </main>
+      <NotificationToastHost />
     </div>
   );
 }

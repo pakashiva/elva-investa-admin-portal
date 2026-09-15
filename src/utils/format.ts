@@ -200,7 +200,7 @@ export function displayRequestId(requestId: string | null | undefined): string {
 export function requestStatusLabel(status: string): 'Pending' | 'Under Review' | 'Approved' | 'Rejected' {
   if (status === 'Under Review') return 'Under Review';
   if (status === 'Rejected') return 'Rejected';
-  if (status === 'Active' || status === 'Closed') return 'Approved';
+  if (status === 'Active' || status === 'Closed' || status === 'Approved') return 'Approved';
   return 'Pending';
 }
 

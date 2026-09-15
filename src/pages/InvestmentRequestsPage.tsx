@@ -81,6 +81,7 @@ export function InvestmentRequestsPage() {
             <table className="data-table">
               <thead>
                 <tr>
+                  <th>PLAN NO.</th>
                   <th>REQUEST ID</th>
                   <th>CUSTOMER NAME</th>
                   <th>CUSTOMER ID</th>
@@ -94,15 +95,38 @@ export function InvestmentRequestsPage() {
               <tbody>
                 {rows.map((row) => {
                   const label = requestStatusLabel(row.status);
+                  const isRenewal = row.kind === 'renewal';
                   return (
-                    <tr key={row.id}>
-                      <td>{displayRequestId(row.request_id)}</td>
+                    <tr key={`${row.kind}-${row.id}`} className={isRenewal ? 'renewal-row' : undefined}>
+                      <td>
+                        <strong>{row.code || '—'}</strong>
+                        {isRenewal ? (
+                          <span className="request-kind-badge renewal">Agreement Renewal</span>
+                        ) : null}
+                      </td>
+                      <td>{displayRequestId(row.request_id ?? row.agreement_id)}</td>
                       <td>
                         <strong>{row.customer_name}</strong>
                       </td>
                       <td>{displayCustomerId(row.customer_id)}</td>
-                      <td>{row.plan_name}</td>
-                      <td>{formatInr(row.fund_amount)}</td>
+                      <td>
+                        {isRenewal ? (
+                          <>
+                            <strong>
+                              {row.mode === 'increase' ? 'Increase amount' : 'Renew same amount'}
+                            </strong>
+                            <div className="muted-cell">Agreement renewal from mobile</div>
+                          </>
+                        ) : (
+                          row.plan_name
+                        )}
+                      </td>
+                      <td>
+                        {formatInr(row.fund_amount)}
+                        {isRenewal && row.mode === 'increase' && row.increment_amount ? (
+                          <div className="muted-cell">+{formatInr(row.increment_amount)}</div>
+                        ) : null}
+                      </td>
                       <td>{formatDate(row.created_at)}</td>
                       <td>
                         <span
@@ -123,7 +147,13 @@ export function InvestmentRequestsPage() {
                         <button
                           type="button"
                           className="ghost-btn"
-                          onClick={() => navigate(`/investment-requests/${row.id}`)}
+                          onClick={() =>
+                            navigate(
+                              isRenewal
+                                ? `/investment-requests/renewal/${row.id}`
+                                : `/investment-requests/${row.id}`
+                            )
+                          }
                         >
                           Review
                         </button>

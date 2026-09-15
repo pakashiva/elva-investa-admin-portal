@@ -6,6 +6,7 @@ import { CustomersPage } from '../pages/CustomersPage';
 import { DashboardPage } from '../pages/DashboardPage';
 import { InvestmentRequestsPage } from '../pages/InvestmentRequestsPage';
 import { InvestmentReviewPage } from '../pages/InvestmentReviewPage';
+import { AgreementRenewalReviewPage } from '../pages/AgreementRenewalReviewPage';
 import { LoginPage } from '../pages/LoginPage';
 import { ManagePasswordsPage } from '../pages/ManagePasswordsPage';
 import { NotificationsPage } from '../pages/NotificationsPage';
@@ -33,6 +34,10 @@ function PortalRoutes() {
         <Route path="/customers" element={<CustomersPage />} />
         <Route path="/customers/:userId" element={<CustomersPage />} />
         <Route path="/investment-requests" element={<InvestmentRequestsPage />} />
+        <Route
+          path="/investment-requests/renewal/:renewalId"
+          element={<AgreementRenewalReviewPage />}
+        />
         <Route path="/investment-requests/:requestId" element={<InvestmentReviewPage />} />
         <Route path="/withdrawals" element={<WithdrawalsPage />} />
         <Route path="/tds" element={<TdsPage />} />

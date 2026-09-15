@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type {
   CustomerBankAccount,
   CustomerDetails,
+  CustomerInvestmentRow,
   CustomerLedgerRow,
   CustomerListParams,
   CustomerListResult,
@@ -88,6 +89,20 @@ function mapBank(row: Record<string, unknown>): CustomerBankAccount {
     ifsc_code: String(row.ifsc_code ?? ''),
     account_type: String(row.account_type ?? 'Savings'),
     is_primary: Boolean(row.is_primary),
+    account_holder_name: String(row.account_holder_name ?? ''),
+    branch_name: String(row.branch_name ?? ''),
+  };
+}
+
+function mapInvestment(row: Record<string, unknown>): CustomerInvestmentRow {
+  return {
+    id: String(row.id ?? ''),
+    code: row.code ? String(row.code) : null,
+    plan_name: String(row.plan_name ?? 'Investment'),
+    fund_amount: asNumber(row.fund_amount),
+    status: String(row.status ?? 'Pending'),
+    bank_account_id: row.bank_account_id ? String(row.bank_account_id) : null,
+    created_at: String(row.created_at ?? ''),
   };
 }
 
@@ -135,10 +150,117 @@ export async function getCustomerDetails(userId: string): Promise<CustomerDetail
     banks: Array.isArray(payload.banks)
       ? payload.banks.map((row) => mapBank(row as Record<string, unknown>))
       : [],
+    investments: Array.isArray(payload.investments)
+      ? payload.investments.map((row) => mapInvestment(row as Record<string, unknown>))
+      : [],
     transactions: Array.isArray(payload.transactions)
       ? payload.transactions.map((row) => mapLedger(row as Record<string, unknown>))
       : [],
   };
+}
+
+export type UpdateCustomerProfileInput = {
+  userId: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  dateOfBirth: string;
+  address: string;
+  city: string;
+  state: string;
+  pinCode: string;
+  panNumber: string;
+};
+
+export async function updateCustomerProfile(input: UpdateCustomerProfileInput): Promise<void> {
+  const { error } = await supabase.rpc('admin_update_customer_profile', {
+    p_user_id: input.userId,
+    p_full_name: input.fullName,
+    p_email: input.email,
+    p_mobile: input.mobile,
+    p_date_of_birth: input.dateOfBirth,
+    p_address: input.address,
+    p_city: input.city,
+    p_state: input.state,
+    p_pin_code: input.pinCode,
+    p_pan_number: input.panNumber || null,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+}
+
+export type UpdateBankAccountInput = {
+  userId: string;
+  bankId: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType: 'Savings' | 'Current';
+  accountHolderName: string;
+  branchName: string;
+  isPrimary: boolean;
+};
+
+export async function updateBankAccount(input: UpdateBankAccountInput): Promise<void> {
+  const { error } = await supabase.rpc('admin_update_bank_account', {
+    p_user_id: input.userId,
+    p_bank_id: input.bankId,
+    p_bank_name: input.bankName,
+    p_account_number: input.accountNumber,
+    p_ifsc_code: input.ifscCode,
+    p_account_type: input.accountType,
+    p_account_holder_name: input.accountHolderName,
+    p_branch_name: input.branchName,
+    p_is_primary: input.isPrimary,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+}
+
+export type AddBankAccountInput = {
+  userId: string;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType: 'Savings' | 'Current';
+  accountHolderName: string;
+  branchName: string;
+  isPrimary: boolean;
+};
+
+export async function addBankAccount(input: AddBankAccountInput): Promise<void> {
+  const { error } = await supabase.rpc('admin_add_bank_account', {
+    p_user_id: input.userId,
+    p_bank_name: input.bankName,
+    p_account_number: input.accountNumber,
+    p_ifsc_code: input.ifscCode,
+    p_account_type: input.accountType,
+    p_account_holder_name: input.accountHolderName,
+    p_branch_name: input.branchName,
+    p_is_primary: input.isPrimary,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+}
+
+export async function updateInvestmentBank(
+  investmentId: string,
+  bankAccountId: string
+): Promise<void> {
+  const { error } = await supabase.rpc('admin_update_investment_bank', {
+    p_investment_id: investmentId,
+    p_bank_account_id: bankAccountId,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
 }
 
 export type CreateCustomerInput = {

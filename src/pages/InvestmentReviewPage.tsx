@@ -18,11 +18,13 @@ import {
   displayRequestId,
   formatInr,
   formatPercent,
+  formatTdsRate,
   last4Account,
 } from '../utils/format';
 
 const RATE_OPTIONS = [0.04, 0.05, 0.06, 0.07, 0.08];
 const PAYOUT_DAYS = [1, 5, 10, 15, 20, 25];
+const REFERRAL_RATE_OPTIONS = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.05];
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -60,6 +62,8 @@ export function InvestmentReviewPage() {
 
   const editable = detail?.status === 'Pending' || detail?.status === 'Under Review';
   const payoutDay = detail?.payout_day ?? 10;
+  const referralRate = detail?.referral_rate ?? 0.01;
+  const hasReferrer = Boolean(detail?.referrer_user_id || detail?.referrer_name);
 
   const preview = useMemo(() => {
     const principal = detail?.fund_amount ?? 0;
@@ -71,15 +75,36 @@ export function InvestmentReviewPage() {
     return { principal, gross, tax, net, maturity: roundMoney(principal + net) };
   }, [detail]);
 
-  async function persistTerms(rate: number, tds: number, day: number) {
+  const referralPreview = useMemo(() => {
+    const principal = detail?.fund_amount ?? 0;
+    const rate = detail?.referral_rate ?? 0.01;
+    const tdsRate = detail?.referral_tds_rate ?? 0.02;
+    const gross = roundMoney(principal * rate);
+    const tax = roundMoney(gross * tdsRate);
+    const net = roundMoney(gross - tax);
+    return { gross, tax, net, tdsRate };
+  }, [detail]);
+
+  async function persistTerms(
+    rate: number,
+    tds: number,
+    day: number,
+    nextReferralRate: number = referralRate
+  ) {
     if (!detail || !editable) {
       return;
     }
     setSaving(true);
     setError(null);
     try {
-      await updateInvestmentTerms(detail.id, rate, tds, day);
-      setDetail({ ...detail, interest_rate: rate, tds_percent: tds, payout_day: day });
+      await updateInvestmentTerms(detail.id, rate, tds, day, nextReferralRate);
+      setDetail({
+        ...detail,
+        interest_rate: rate,
+        tds_percent: tds,
+        payout_day: day,
+        referral_rate: nextReferralRate,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save terms');
     } finally {
@@ -108,7 +133,11 @@ export function InvestmentReviewPage() {
     <>
       <AppHeader
         title="Investment Approval Console"
-        subtitle={`Awaiting decision for ${displayRequestId(detail?.request_id)}.`}
+        subtitle={
+          editable
+            ? `Awaiting decision for ${displayRequestId(detail?.request_id)}.`
+            : `Saved terms for ${displayRequestId(detail?.request_id)} · ${detail?.status ?? ''}.`
+        }
         showSearch
         onOpenMenu={onOpenMenu}
       />
@@ -138,12 +167,31 @@ export function InvestmentReviewPage() {
                   <span>ACTIVE SCHEMES</span>
                   <strong>{detail.active_plans} active plans</strong>
                 </div>
+                <div className="detail-field">
+                  <span>REFERRER NAME</span>
+                  <strong>{detail.referrer_name || '—'}</strong>
+                  {detail.referral_code ? <p>Code: {detail.referral_code}</p> : null}
+                </div>
+                {hasReferrer ? (
+                  <div className="detail-field">
+                    <span>REFERRAL % (FOR REFERRER)</span>
+                    <strong>{formatTdsRate(referralRate)}</strong>
+                    <p>
+                      Est. net commission: {formatInr(referralPreview.net)} after{' '}
+                      {formatTdsRate(referralPreview.tdsRate)} TDS
+                    </p>
+                  </div>
+                ) : null}
               </div>
             </article>
 
             <article className="card review-card">
               <h3>Request Parameters</h3>
               <div className="detail-grid">
+                <div className="detail-field">
+                  <span>PLAN NO.</span>
+                  <strong>{detail.code || '—'}</strong>
+                </div>
                 <div className="detail-field">
                   <span>PROPOSED PLAN</span>
                   <strong>
@@ -176,8 +224,12 @@ export function InvestmentReviewPage() {
 
             <label className="toggle-row">
               <span>
-                <strong>TDS Deduction Policy</strong>
-                <p>Automate statutory 10% lock-in</p>
+                <strong>{detail.tds_percent > 0 ? 'File TDS' : 'Not File TDS'}</strong>
+                <p>
+                  {detail.tds_percent > 0
+                    ? '10% TDS will be deducted on monthly interest'
+                    : 'No TDS will be deducted on monthly interest'}
+                </p>
               </span>
               <input
                 type="checkbox"
@@ -188,6 +240,41 @@ export function InvestmentReviewPage() {
                 }
               />
             </label>
+
+            {hasReferrer ? (
+              <label className="config-field">
+                Referral percentage (for {detail.referrer_name || 'referrer'})
+                <select
+                  className="select"
+                  value={referralRate}
+                  disabled={!editable || saving}
+                  onChange={(event) =>
+                    void persistTerms(
+                      detail.interest_rate,
+                      detail.tds_percent,
+                      payoutDay,
+                      Number(event.target.value)
+                    )
+                  }
+                >
+                  {!REFERRAL_RATE_OPTIONS.includes(referralRate) ? (
+                    <option value={referralRate}>{formatTdsRate(referralRate)}</option>
+                  ) : null}
+                  {REFERRAL_RATE_OPTIONS.map((rate) => (
+                    <option key={rate} value={rate}>
+                      {formatTdsRate(rate)}
+                      {rate === 0.01 ? ' (Default)' : ''}
+                    </option>
+                  ))}
+                </select>
+                <p className="muted" style={{ marginTop: 8 }}>
+                  Gross {formatInr(referralPreview.gross)} − TDS {formatInr(referralPreview.tax)} ={' '}
+                  <strong>{formatInr(referralPreview.net)}</strong> net to referrer on approval.
+                </p>
+              </label>
+            ) : (
+              <p className="muted">No referrer on this request — referral percentage not applicable.</p>
+            )}
 
             <label className="config-field">
               Assign Interest Yield (p.m.)
@@ -280,7 +367,11 @@ export function InvestmentReviewPage() {
                 </button>
               </div>
             ) : (
-              <p className="muted">This request is already {requestStatusLabelSafe(detail.status)}.</p>
+              <p className="muted">
+                This investment is {requestStatusLabelSafe(detail.status)}. Terms below are saved on
+                the investment record — open this page any time to review interest, TDS, payout day,
+                and referral %.
+              </p>
             )}
           </article>
         </div>

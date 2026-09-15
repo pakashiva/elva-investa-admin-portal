@@ -105,6 +105,18 @@ export type CustomerBankAccount = {
   ifsc_code: string;
   account_type: string;
   is_primary: boolean;
+  account_holder_name: string;
+  branch_name: string;
+};
+
+export type CustomerInvestmentRow = {
+  id: string;
+  code: string | null;
+  plan_name: string;
+  fund_amount: number;
+  status: string;
+  bank_account_id: string | null;
+  created_at: string;
 };
 
 export type CustomerLedgerStatus = 'Completed' | 'Pending';
@@ -127,10 +139,11 @@ export type CustomerDetails = {
     returns_earned: number;
   };
   banks: CustomerBankAccount[];
+  investments: CustomerInvestmentRow[];
   transactions: CustomerLedgerRow[];
 };
 
-export type CustomerDetailsTab = 'profile' | 'banks' | 'transactions';
+export type CustomerDetailsTab = 'profile' | 'banks' | 'investments' | 'transactions';
 
 export type InvestmentRequestFilter =
   | 'all'
@@ -144,10 +157,17 @@ export type InvestmentRequestStatus =
   | 'Under Review'
   | 'Active'
   | 'Closed'
+  | 'Approved'
   | 'Rejected';
+
+export type InvestmentQueueKind = 'investment' | 'renewal';
+
+export type AgreementRenewalMode = 'same_amount' | 'increase';
 
 export type InvestmentRequestListRow = {
   id: string;
+  kind: InvestmentQueueKind;
+  code: string | null;
   request_id: string | null;
   customer_name: string;
   customer_id: string | null;
@@ -155,6 +175,9 @@ export type InvestmentRequestListRow = {
   fund_amount: number;
   status: InvestmentRequestStatus;
   created_at: string;
+  mode: AgreementRenewalMode | null;
+  increment_amount: number | null;
+  agreement_id: string | null;
 };
 
 export type InvestmentRequestListResult = {
@@ -166,6 +189,7 @@ export type InvestmentRequestListResult = {
 
 export type InvestmentRequestDetail = {
   id: string;
+  code: string | null;
   request_id: string | null;
   status: InvestmentRequestStatus;
   plan_name: string;
@@ -177,6 +201,11 @@ export type InvestmentRequestDetail = {
   user_id: string;
   customer_name: string;
   customer_id: string | null;
+  referral_code: string | null;
+  referrer_user_id: string | null;
+  referrer_name: string | null;
+  referral_rate: number;
+  referral_tds_rate: number;
   active_portfolio: number;
   active_plans: number;
   bank: {
@@ -186,7 +215,37 @@ export type InvestmentRequestDetail = {
   } | null;
 };
 
+export type AgreementRenewalDetail = {
+  id: string;
+  kind: 'renewal';
+  status: 'Pending' | 'Approved' | 'Rejected';
+  mode: AgreementRenewalMode;
+  agreement_id: string;
+  customer_id: string | null;
+  customer_name: string;
+  current_amount: number;
+  increment_amount: number | null;
+  new_principal: number;
+  created_at: string;
+  user_id: string;
+  investment_id: string;
+  plan_no: string | null;
+  plan_name: string;
+  investment_status: string;
+  fund_amount: number;
+  interest_rate: number;
+  tds_percent: number;
+  payout_day: number;
+  invested_date: string | null;
+  bank: {
+    bank_name: string;
+    account_number: string;
+    ifsc_code: string;
+  } | null;
+};
+
 export type InvestmentDecision = 'approve' | 'hold' | 'reject';
+export type RenewalDecision = 'approve' | 'reject';
 
 export type WithdrawalFilter = 'pending' | 'approved' | 'rejected';
 
@@ -302,6 +361,8 @@ export type ReportKind =
   | 'tds'
   | 'referral'
   | 'wealth'
+  | 'upcoming_payout'
+  | 'payout_range'
   | 'bulk';
 
 export type ReportFormat = 'xlsx' | 'csv' | 'pdf';

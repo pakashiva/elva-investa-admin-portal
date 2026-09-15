@@ -1,11 +1,15 @@
 import { supabase } from '../lib/supabase';
 import type {
+  AgreementRenewalDetail,
+  AgreementRenewalMode,
   InvestmentDecision,
+  InvestmentQueueKind,
   InvestmentRequestDetail,
   InvestmentRequestFilter,
   InvestmentRequestListResult,
   InvestmentRequestListRow,
   InvestmentRequestStatus,
+  RenewalDecision,
 } from '../types/admin';
 import { parseRpcError } from '../utils/format';
 
@@ -20,6 +24,7 @@ function asStatus(value: unknown): InvestmentRequestStatus {
     status === 'Under Review' ||
     status === 'Active' ||
     status === 'Closed' ||
+    status === 'Approved' ||
     status === 'Rejected'
   ) {
     return status;
@@ -27,9 +32,22 @@ function asStatus(value: unknown): InvestmentRequestStatus {
   return 'Pending';
 }
 
+function asKind(value: unknown): InvestmentQueueKind {
+  return value === 'renewal' ? 'renewal' : 'investment';
+}
+
+function asMode(value: unknown): AgreementRenewalMode | null {
+  if (value === 'same_amount' || value === 'increase') {
+    return value;
+  }
+  return null;
+}
+
 function mapListRow(row: Record<string, unknown>): InvestmentRequestListRow {
   return {
     id: String(row.id ?? ''),
+    kind: asKind(row.kind),
+    code: row.code ? String(row.code) : null,
     request_id: row.request_id ? String(row.request_id) : null,
     customer_name: String(row.customer_name ?? ''),
     customer_id: row.customer_id ? String(row.customer_id) : null,
@@ -37,6 +55,12 @@ function mapListRow(row: Record<string, unknown>): InvestmentRequestListRow {
     fund_amount: asNumber(row.fund_amount),
     status: asStatus(row.status),
     created_at: String(row.created_at ?? ''),
+    mode: asMode(row.mode),
+    increment_amount:
+      row.increment_amount === null || row.increment_amount === undefined
+        ? null
+        : asNumber(row.increment_amount),
+    agreement_id: row.agreement_id ? String(row.agreement_id) : null,
   };
 }
 
@@ -84,6 +108,7 @@ export async function getInvestmentRequest(
 
   return {
     id: String(row.id ?? ''),
+    code: row.code ? String(row.code) : null,
     request_id: row.request_id ? String(row.request_id) : null,
     status: asStatus(row.status),
     plan_name: String(row.plan_name ?? 'New Fund Request'),
@@ -95,8 +120,64 @@ export async function getInvestmentRequest(
     user_id: String(row.user_id ?? ''),
     customer_name: String(row.customer_name ?? ''),
     customer_id: row.customer_id ? String(row.customer_id) : null,
+    referral_code: row.referral_code ? String(row.referral_code) : null,
+    referrer_user_id: row.referrer_user_id ? String(row.referrer_user_id) : null,
+    referrer_name: row.referrer_name ? String(row.referrer_name) : null,
+    referral_rate: asNumber(row.referral_rate) || 0.01,
+    referral_tds_rate: asNumber(row.referral_tds_rate) || 0.02,
     active_portfolio: asNumber(row.active_portfolio),
     active_plans: asNumber(row.active_plans),
+    bank: bank
+      ? {
+          bank_name: String(bank.bank_name ?? ''),
+          account_number: String(bank.account_number ?? ''),
+          ifsc_code: String(bank.ifsc_code ?? ''),
+        }
+      : null,
+  };
+}
+
+export async function getAgreementRenewal(id: string): Promise<AgreementRenewalDetail> {
+  const { data, error } = await supabase.rpc('admin_get_agreement_renewal', {
+    p_id: id,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  const bank = row.bank as Record<string, unknown> | null;
+  const mode = asMode(row.mode) ?? 'same_amount';
+  const statusRaw = String(row.status ?? 'Pending');
+  const status =
+    statusRaw === 'Approved' || statusRaw === 'Rejected' ? statusRaw : 'Pending';
+
+  return {
+    id: String(row.id ?? ''),
+    kind: 'renewal',
+    status,
+    mode,
+    agreement_id: String(row.agreement_id ?? ''),
+    customer_id: row.customer_id ? String(row.customer_id) : null,
+    customer_name: String(row.customer_name ?? ''),
+    current_amount: asNumber(row.current_amount),
+    increment_amount:
+      row.increment_amount === null || row.increment_amount === undefined
+        ? null
+        : asNumber(row.increment_amount),
+    new_principal: asNumber(row.new_principal),
+    created_at: String(row.created_at ?? ''),
+    user_id: String(row.user_id ?? ''),
+    investment_id: String(row.investment_id ?? ''),
+    plan_no: row.plan_no ? String(row.plan_no) : null,
+    plan_name: String(row.plan_name ?? 'Investment'),
+    investment_status: String(row.investment_status ?? ''),
+    fund_amount: asNumber(row.fund_amount),
+    interest_rate: asNumber(row.interest_rate),
+    tds_percent: asNumber(row.tds_percent),
+    payout_day: asPayoutDay(row.payout_day),
+    invested_date: row.invested_date ? String(row.invested_date) : null,
     bank: bank
       ? {
           bank_name: String(bank.bank_name ?? ''),
@@ -121,13 +202,15 @@ export async function updateInvestmentTerms(
   id: string,
   interestRate: number,
   tdsPercent: number,
-  payoutDay: number
+  payoutDay: number,
+  referralRate: number = 0.01
 ): Promise<void> {
   const { error } = await supabase.rpc('admin_update_investment_terms', {
     p_id: id,
     p_interest_rate: interestRate,
     p_tds_percent: tdsPercent,
     p_payout_day: payoutDay,
+    p_referral_rate: referralRate,
   });
 
   if (error) {
@@ -150,6 +233,26 @@ export async function decideInvestment(id: string, action: InvestmentDecision) {
     id: String(row.id ?? id),
     request_id: row.request_id ? String(row.request_id) : null,
     status: asStatus(row.status),
+    fund_amount: asNumber(row.fund_amount),
+    action,
+  };
+}
+
+export async function decideAgreementRenewal(id: string, action: RenewalDecision) {
+  const { data, error } = await supabase.rpc('admin_decide_agreement_renewal', {
+    p_id: id,
+    p_action: action,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  return {
+    id: String(row.id ?? id),
+    agreement_id: row.agreement_id ? String(row.agreement_id) : null,
+    status: String(row.status ?? ''),
     fund_amount: asNumber(row.fund_amount),
     action,
   };

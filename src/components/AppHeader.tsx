@@ -8,7 +8,7 @@ import { MenuButton } from './Sidebar';
 
 type AppHeaderProps = {
   title: string;
-  subtitle: string;
+  subtitle?: string;
   showSearch?: boolean;
   actions?: ReactNode;
   onOpenMenu: () => void;
@@ -30,7 +30,7 @@ export function AppHeader({
         <MenuButton onClick={onOpenMenu} />
         <div className="page-title">
           <h1>{title}</h1>
-          <p>{subtitle}</p>
+          {subtitle ? <p>{subtitle}</p> : null}
         </div>
       </div>
 

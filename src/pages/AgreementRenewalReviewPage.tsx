@@ -1,14 +1,25 @@
+import { FileDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { AgreementDetailsModal } from '../components/AgreementDetailsModal';
 import { AppHeader } from '../components/AppHeader';
 import { DecisionResultModal } from '../components/DecisionResultModal';
 import { ErrorBanner } from '../components/States';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import {
+  downloadAgreementDocx,
+  getInvestmentAgreement,
+  saveInvestmentAgreement,
+} from '../services/agreementService';
+import {
   decideAgreementRenewal,
   getAgreementRenewal,
 } from '../services/investmentRequestService';
-import type { AgreementRenewalDetail, RenewalDecision } from '../types/admin';
+import type {
+  AgreementInputs,
+  AgreementRenewalDetail,
+  RenewalDecision,
+} from '../types/admin';
 import {
   displayCustomerId,
   formatDate,
@@ -31,6 +42,8 @@ export function AgreementRenewalReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [decision, setDecision] = useState<RenewalDecision | null>(null);
+  const [agreementMode, setAgreementMode] = useState<'approve' | 'download' | null>(null);
+  const [agreementError, setAgreementError] = useState<string | null>(null);
 
   const load = async () => {
     if (!renewalId) {
@@ -68,6 +81,11 @@ export function AgreementRenewalReviewPage() {
     if (!detail || !editable) {
       return;
     }
+    if (action === 'approve') {
+      // Renewal starts a fresh term, so it prints a fresh agreement.
+      setAgreementMode('approve');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -87,6 +105,92 @@ export function AgreementRenewalReviewPage() {
       setDecision(action);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update renewal');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onAgreementConfirm(inputs: AgreementInputs) {
+    if (!detail) {
+      return;
+    }
+    const approving = agreementMode === 'approve';
+    const alreadyApproved = detail.status === 'Approved';
+    setSaving(true);
+    setError(null);
+    setAgreementError(null);
+    try {
+      if (approving && !alreadyApproved) {
+        try {
+          const result = await decideAgreementRenewal(detail.id, 'approve');
+          setDetail((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  status:
+                    result.status === 'Approved' || result.status === 'Rejected'
+                      ? result.status
+                      : prev.status,
+                  fund_amount: result.fund_amount || prev.fund_amount,
+                  new_principal: result.fund_amount || prev.new_principal,
+                }
+              : prev
+          );
+        } catch (err) {
+          const message = err instanceof Error ? err.message : '';
+          if (!/already been decided|already (approved|rejected)|Only Pending/i.test(message)) {
+            throw err;
+          }
+          setDetail((prev) => (prev ? { ...prev, status: 'Approved' } : prev));
+        }
+      }
+
+      const payload = await saveInvestmentAgreement({
+        investmentId: detail.investment_id,
+        branch: inputs.branch,
+        chequeNo: inputs.chequeNo,
+        chequeBankName: inputs.chequeBankName,
+        chequeBankAddress: inputs.chequeBankAddress,
+        renewalId: detail.id,
+      });
+      await downloadAgreementDocx(payload);
+      setAgreementMode(null);
+      setAgreementError(null);
+      if (approving) {
+        setDecision('approve');
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not generate the agreement';
+      setAgreementError(message);
+      setError(message);
+      if (approving) {
+        setAgreementMode('download');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onDownloadAgreement() {
+    if (!detail) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setAgreementError(null);
+    try {
+      const payload = await getInvestmentAgreement(detail.investment_id, detail.id);
+      if (!payload) {
+        setAgreementMode('download');
+        return;
+      }
+      await downloadAgreementDocx(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not download the agreement';
+      setAgreementError(message);
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -295,9 +399,37 @@ export function AgreementRenewalReviewPage() {
                 Reject
               </button>
             </div>
+          ) : detail.status === 'Approved' ? (
+            <div className="decision-actions">
+              <button
+                type="button"
+                className="ghost-btn"
+                disabled={saving}
+                onClick={() => void onDownloadAgreement()}
+              >
+                <FileDown size={16} /> Download Agreement (Word)
+              </button>
+            </div>
           ) : null}
         </article>
       </section>
+
+      <AgreementDetailsModal
+        open={agreementMode !== null}
+        title={
+          agreementMode === 'approve'
+            ? 'Approve Renewal & Generate Agreement'
+            : 'Generate Renewal Agreement'
+        }
+        confirmLabel={agreementMode === 'approve' ? 'Approve & Download' : 'Download Agreement'}
+        busy={saving}
+        error={agreementError}
+        onClose={() => {
+          setAgreementMode(null);
+          setAgreementError(null);
+        }}
+        onConfirm={(inputs) => void onAgreementConfirm(inputs)}
+      />
 
       {decision ? (
         <DecisionResultModal

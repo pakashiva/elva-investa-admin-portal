@@ -1,15 +1,23 @@
+import { FileDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
+import { AgreementDetailsModal } from '../components/AgreementDetailsModal';
 import { AppHeader } from '../components/AppHeader';
 import { DecisionResultModal } from '../components/DecisionResultModal';
 import { ErrorBanner } from '../components/States';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
+import {
+  downloadAgreementDocx,
+  getInvestmentAgreement,
+  saveInvestmentAgreement,
+} from '../services/agreementService';
 import {
   decideInvestment,
   getInvestmentRequest,
   updateInvestmentTerms,
 } from '../services/investmentRequestService';
 import type {
+  AgreementInputs,
   InvestmentDecision,
   InvestmentRequestDetail,
 } from '../types/admin';
@@ -39,6 +47,8 @@ export function InvestmentReviewPage() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [decision, setDecision] = useState<InvestmentDecision | null>(null);
+  const [agreementMode, setAgreementMode] = useState<'approve' | 'download' | null>(null);
+  const [agreementError, setAgreementError] = useState<string | null>(null);
 
   const load = async () => {
     if (!requestId) {
@@ -116,6 +126,11 @@ export function InvestmentReviewPage() {
     if (!detail || !editable) {
       return;
     }
+    if (action === 'approve') {
+      // Approval needs branch + cheque details before the agreement can print.
+      setAgreementMode('approve');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
@@ -124,6 +139,82 @@ export function InvestmentReviewPage() {
       setDecision(action);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not update request');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onAgreementConfirm(inputs: AgreementInputs) {
+    if (!detail) {
+      return;
+    }
+    const approving = agreementMode === 'approve';
+    const alreadyActive = detail.status === 'Active' || detail.status === 'Closed';
+    setSaving(true);
+    setError(null);
+    setAgreementError(null);
+    try {
+      // Approve first. If it was already decided on a previous attempt, continue
+      // straight to agreement save + download instead of failing the whole flow.
+      if (approving && !alreadyActive) {
+        try {
+          const result = await decideInvestment(detail.id, 'approve');
+          setDetail((prev) => (prev ? { ...prev, status: result.status } : prev));
+        } catch (err) {
+          const message = err instanceof Error ? err.message : '';
+          if (!/already been decided/i.test(message)) {
+            throw err;
+          }
+          setDetail((prev) => (prev ? { ...prev, status: 'Active' } : prev));
+        }
+      }
+
+      const payload = await saveInvestmentAgreement({
+        investmentId: detail.id,
+        branch: inputs.branch,
+        chequeNo: inputs.chequeNo,
+        chequeBankName: inputs.chequeBankName,
+        chequeBankAddress: inputs.chequeBankAddress,
+      });
+      await downloadAgreementDocx(payload);
+      setAgreementMode(null);
+      setAgreementError(null);
+      if (approving) {
+        setDecision('approve');
+      }
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not generate the agreement';
+      setAgreementError(message);
+      setError(message);
+      // Stay on download mode so a retry only regenerates the Word file.
+      if (approving) {
+        setAgreementMode('download');
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function onDownloadAgreement() {
+    if (!detail) {
+      return;
+    }
+    setSaving(true);
+    setError(null);
+    setAgreementError(null);
+    try {
+      const payload = await getInvestmentAgreement(detail.id);
+      if (!payload) {
+        setAgreementMode('download');
+        return;
+      }
+      await downloadAgreementDocx(payload);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : 'Could not download the agreement';
+      setAgreementError(message);
+      setError(message);
     } finally {
       setSaving(false);
     }
@@ -367,15 +458,44 @@ export function InvestmentReviewPage() {
                 </button>
               </div>
             ) : (
-              <p className="muted">
-                This investment is {requestStatusLabelSafe(detail.status)}. Terms below are saved on
-                the investment record — open this page any time to review interest, TDS, payout day,
-                and referral %.
-              </p>
+              <>
+                <p className="muted">
+                  This investment is {requestStatusLabelSafe(detail.status)}. Terms below are saved
+                  on the investment record — open this page any time to review interest, TDS, payout
+                  day, and referral %.
+                </p>
+                {detail.status === 'Active' || detail.status === 'Closed' ? (
+                  <div className="decision-actions">
+                    <button
+                      type="button"
+                      className="ghost-btn"
+                      disabled={saving}
+                      onClick={() => void onDownloadAgreement()}
+                    >
+                      <FileDown size={16} /> Download Agreement (Word)
+                    </button>
+                  </div>
+                ) : null}
+              </>
             )}
           </article>
         </div>
       )}
+
+      <AgreementDetailsModal
+        open={agreementMode !== null}
+        title={
+          agreementMode === 'approve' ? 'Approve & Generate Agreement' : 'Generate Loan Agreement'
+        }
+        confirmLabel={agreementMode === 'approve' ? 'Approve & Download' : 'Download Agreement'}
+        busy={saving}
+        error={agreementError}
+        onClose={() => {
+          setAgreementMode(null);
+          setAgreementError(null);
+        }}
+        onConfirm={(inputs) => void onAgreementConfirm(inputs)}
+      />
 
       {decision && detail ? (
         <DecisionResultModal

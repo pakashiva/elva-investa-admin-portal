@@ -24,8 +24,13 @@ type FormState = {
   email: string;
   phone: string;
   dateOfBirth: string;
+  panNumber: string;
+  aadhaarNumber: string;
   nomineeName: string;
   nomineeRelationship: string;
+  nomineeAadhaar: string;
+  nomineePan: string;
+  nomineeMobile: string;
   address: string;
   accountHolderName: string;
   accountNumber: string;
@@ -41,8 +46,13 @@ const EMPTY: FormState = {
   email: '',
   phone: '',
   dateOfBirth: '',
+  panNumber: '',
+  aadhaarNumber: '',
   nomineeName: '',
   nomineeRelationship: '',
+  nomineeAadhaar: '',
+  nomineePan: '',
+  nomineeMobile: '',
   address: '',
   accountHolderName: '',
   accountNumber: '',
@@ -79,6 +89,15 @@ function validateAccountNumber(account: string): string | null {
   if (!digits) return 'Account number is required.';
   if (!/^\d{9,18}$/.test(digits)) {
     return 'Account number must be 9 to 18 digits.';
+  }
+  return null;
+}
+
+function validatePan(pan: string): string | null {
+  const code = pan.replace(/\s/g, '').toUpperCase();
+  if (!code) return 'PAN number is required.';
+  if (!/^[A-Z]{5}[0-9]{4}[A-Z]$/.test(code)) {
+    return 'PAN must be like ABCDE1234F.';
   }
   return null;
 }
@@ -128,8 +147,22 @@ function validateForm(form: FormState): FieldErrors {
   if (phoneError) errors.phone = phoneError;
   const dobError = validateDob(form.dateOfBirth);
   if (dobError) errors.dateOfBirth = dobError;
+  const panError = validatePan(form.panNumber);
+  if (panError) errors.panNumber = panError;
+  if (digitsOnly(form.aadhaarNumber).length !== 12) {
+    errors.aadhaarNumber = 'Aadhaar must be 12 digits.';
+  }
   if (!form.nomineeName.trim()) errors.nomineeName = 'Nominee name is required.';
   if (!form.nomineeRelationship) errors.nomineeRelationship = 'Select a relationship.';
+  if (form.nomineeAadhaar && digitsOnly(form.nomineeAadhaar).length !== 12) {
+    errors.nomineeAadhaar = 'Aadhaar must be 12 digits.';
+  }
+  if (form.nomineePan && validatePan(form.nomineePan)) {
+    errors.nomineePan = 'PAN must be like ABCDE1234F.';
+  }
+  if (form.nomineeMobile && !/^[6-9]\d{9}$/.test(digitsOnly(form.nomineeMobile))) {
+    errors.nomineeMobile = 'Enter a 10-digit mobile number.';
+  }
   if (!form.address.trim()) errors.address = 'Full address is required.';
   if (!form.accountHolderName.trim()) errors.accountHolderName = 'Account holder name is required.';
   const accountError = validateAccountNumber(form.accountNumber);
@@ -224,8 +257,13 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
       email: form.email.trim(),
       mobile: digitsOnly(form.phone),
       dateOfBirth: dobIso,
+      panNumber: form.panNumber.replace(/\s/g, '').toUpperCase(),
+      aadhaarNumber: digitsOnly(form.aadhaarNumber),
       nomineeName: form.nomineeName.trim(),
       nomineeRelationship: form.nomineeRelationship,
+      nomineeAadhaar: digitsOnly(form.nomineeAadhaar),
+      nomineePan: form.nomineePan.replace(/\s/g, '').toUpperCase(),
+      nomineeMobile: digitsOnly(form.nomineeMobile),
       address: form.address.trim(),
       accountHolderName: form.accountHolderName.trim(),
       accountNumber: digitsOnly(form.accountNumber),
@@ -323,6 +361,34 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
                 </div>
                 {errors.dateOfBirth ? <em>{errors.dateOfBirth}</em> : null}
               </label>
+
+              <label className="create-field">
+                <span>PAN Number</span>
+                <input
+                  value={form.panNumber}
+                  onChange={(event) =>
+                    update(
+                      'panNumber',
+                      event.target.value.toUpperCase().replace(/\s/g, '').slice(0, 10)
+                    )
+                  }
+                  placeholder="ABCDE1234F"
+                />
+                {errors.panNumber ? <em>{errors.panNumber}</em> : null}
+              </label>
+
+              <label className="create-field">
+                <span>Aadhaar Number</span>
+                <input
+                  inputMode="numeric"
+                  value={form.aadhaarNumber}
+                  onChange={(event) =>
+                    update('aadhaarNumber', digitsOnly(event.target.value).slice(0, 12))
+                  }
+                  placeholder="12-digit Aadhaar"
+                />
+                {errors.aadhaarNumber ? <em>{errors.aadhaarNumber}</em> : null}
+              </label>
             </div>
           </section>
 
@@ -353,6 +419,50 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
                   ))}
                 </select>
                 {errors.nomineeRelationship ? <em>{errors.nomineeRelationship}</em> : null}
+              </label>
+
+              <label className="create-field">
+                <span>Nominee Aadhaar (optional)</span>
+                <input
+                  inputMode="numeric"
+                  value={form.nomineeAadhaar}
+                  onChange={(event) =>
+                    update('nomineeAadhaar', digitsOnly(event.target.value).slice(0, 12))
+                  }
+                  placeholder="12-digit Aadhaar"
+                />
+                {errors.nomineeAadhaar ? <em>{errors.nomineeAadhaar}</em> : null}
+              </label>
+
+              <label className="create-field">
+                <span>Nominee PAN (optional)</span>
+                <input
+                  value={form.nomineePan}
+                  onChange={(event) =>
+                    update(
+                      'nomineePan',
+                      event.target.value.toUpperCase().replace(/\s/g, '').slice(0, 10)
+                    )
+                  }
+                  placeholder="ABCDE1234F"
+                />
+                {errors.nomineePan ? <em>{errors.nomineePan}</em> : null}
+              </label>
+
+              <label className="create-field">
+                <span>Nominee Phone (optional)</span>
+                <div className="phone-input">
+                  <span>+91</span>
+                  <input
+                    inputMode="numeric"
+                    value={form.nomineeMobile}
+                    onChange={(event) =>
+                      update('nomineeMobile', digitsOnly(event.target.value).slice(0, 10))
+                    }
+                    placeholder="98765 43210"
+                  />
+                </div>
+                {errors.nomineeMobile ? <em>{errors.nomineeMobile}</em> : null}
               </label>
             </div>
           </section>

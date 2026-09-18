@@ -13,6 +13,7 @@ import type {
   CustomerDetailsTab,
   CustomerInvestmentRow,
   CustomerListRow,
+  CustomerNominee,
   CustomerProfile,
 } from '../types/admin';
 import {
@@ -41,6 +42,12 @@ type ProfileForm = {
   state: string;
   pinCode: string;
   panNumber: string;
+  aadhaarNumber: string;
+  nomineeName: string;
+  nomineeRelationship: string;
+  nomineeAadhaar: string;
+  nomineePan: string;
+  nomineeMobile: string;
 };
 
 type BankForm = {
@@ -63,7 +70,10 @@ function toDobInput(value: string): string {
   return value;
 }
 
-function profileToForm(profile: CustomerProfile): ProfileForm {
+function profileToForm(
+  profile: CustomerProfile,
+  nominee: CustomerNominee | null
+): ProfileForm {
   return {
     fullName: profile.full_name || '',
     email: profile.email_address || '',
@@ -74,6 +84,12 @@ function profileToForm(profile: CustomerProfile): ProfileForm {
     state: profile.state === '—' ? '' : profile.state || '',
     pinCode: profile.pin_code === '000000' ? '' : profile.pin_code || '',
     panNumber: profile.pan_number || '',
+    aadhaarNumber: digitsOnly(profile.aadhaar_number || ''),
+    nomineeName: nominee?.nominee_name || '',
+    nomineeRelationship: nominee?.relationship || '',
+    nomineeAadhaar: digitsOnly(nominee?.nominee_aadhaar || ''),
+    nomineePan: nominee?.nominee_pan || '',
+    nomineeMobile: digitsOnly(nominee?.nominee_mobile || '').slice(-10),
   };
 }
 
@@ -158,7 +174,7 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
 
   useEffect(() => {
     if (!data) return;
-    setProfileForm(profileToForm(data.profile));
+    setProfileForm(profileToForm(data.profile, data.nominee));
     const map: Record<string, string> = {};
     for (const inv of data.investments) {
       map[inv.id] = inv.bank_account_id ?? '';
@@ -205,6 +221,12 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
         state: profileForm.state.trim() || '—',
         pinCode: profileForm.pinCode.trim() || '000000',
         panNumber: profileForm.panNumber.trim().toUpperCase(),
+        aadhaarNumber: digitsOnly(profileForm.aadhaarNumber),
+        nomineeName: profileForm.nomineeName.trim(),
+        nomineeRelationship: profileForm.nomineeRelationship.trim(),
+        nomineeAadhaar: digitsOnly(profileForm.nomineeAadhaar),
+        nomineePan: profileForm.nomineePan.trim().toUpperCase(),
+        nomineeMobile: digitsOnly(profileForm.nomineeMobile),
       });
       setEditingProfile(false);
       setNotice('Profile saved.');
@@ -323,7 +345,7 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
                           disabled={saving}
                           onClick={() => {
                             setEditingProfile(false);
-                            setProfileForm(profileToForm(data.profile));
+                            setProfileForm(profileToForm(data.profile, data.nominee));
                             setSaveError(null);
                           }}
                         >
@@ -387,6 +409,14 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
                         }
                         disabled={saving}
                       />
+                      <EditField
+                        label="AADHAAR NUMBER"
+                        value={profileForm.aadhaarNumber}
+                        onChange={(v) =>
+                          setProfileForm({ ...profileForm, aadhaarNumber: digitsOnly(v).slice(0, 12) })
+                        }
+                        disabled={saving}
+                      />
                     </div>
                   ) : (
                     <div className="detail-grid">
@@ -395,6 +425,64 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
                       <Field label="PHONE NUMBER" value={formatMobile(data.profile.mobile_number)} />
                       <Field label="DATE OF BIRTH" value={formatDate(data.profile.date_of_birth)} />
                       <Field label="PAN NUMBER" value={data.profile.pan_number || '—'} />
+                      <Field label="AADHAAR NUMBER" value={data.profile.aadhaar_number || '—'} />
+                    </div>
+                  )}
+                </article>
+
+                <article className="detail-card">
+                  <h3>Nominee</h3>
+                  {editingProfile ? (
+                    <div className="detail-grid">
+                      <EditField
+                        label="NOMINEE NAME"
+                        value={profileForm.nomineeName}
+                        onChange={(v) => setProfileForm({ ...profileForm, nomineeName: v })}
+                        disabled={saving}
+                      />
+                      <EditField
+                        label="RELATIONSHIP"
+                        value={profileForm.nomineeRelationship}
+                        onChange={(v) =>
+                          setProfileForm({ ...profileForm, nomineeRelationship: v })
+                        }
+                        disabled={saving}
+                      />
+                      <EditField
+                        label="NOMINEE AADHAAR"
+                        value={profileForm.nomineeAadhaar}
+                        onChange={(v) =>
+                          setProfileForm({ ...profileForm, nomineeAadhaar: digitsOnly(v).slice(0, 12) })
+                        }
+                        disabled={saving}
+                      />
+                      <EditField
+                        label="NOMINEE PAN"
+                        value={profileForm.nomineePan}
+                        onChange={(v) =>
+                          setProfileForm({
+                            ...profileForm,
+                            nomineePan: v.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 10),
+                          })
+                        }
+                        disabled={saving}
+                      />
+                      <EditField
+                        label="NOMINEE PHONE"
+                        value={profileForm.nomineeMobile}
+                        onChange={(v) =>
+                          setProfileForm({ ...profileForm, nomineeMobile: digitsOnly(v).slice(0, 10) })
+                        }
+                        disabled={saving}
+                      />
+                    </div>
+                  ) : (
+                    <div className="detail-grid">
+                      <Field label="NOMINEE NAME" value={data.nominee?.nominee_name || '—'} />
+                      <Field label="RELATIONSHIP" value={data.nominee?.relationship || '—'} />
+                      <Field label="NOMINEE AADHAAR" value={data.nominee?.nominee_aadhaar || '—'} />
+                      <Field label="NOMINEE PAN" value={data.nominee?.nominee_pan || '—'} />
+                      <Field label="NOMINEE PHONE" value={data.nominee?.nominee_mobile || '—'} />
                     </div>
                   )}
                 </article>

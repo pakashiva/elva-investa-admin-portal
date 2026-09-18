@@ -96,6 +96,16 @@ export type CustomerProfile = {
   state: string;
   pin_code: string;
   pan_number: string | null;
+  aadhaar_number: string | null;
+};
+
+export type CustomerNominee = {
+  id: string;
+  nominee_name: string;
+  relationship: string;
+  nominee_aadhaar: string | null;
+  nominee_pan: string | null;
+  nominee_mobile: string | null;
 };
 
 export type CustomerBankAccount = {
@@ -132,6 +142,7 @@ export type CustomerLedgerRow = {
 
 export type CustomerDetails = {
   profile: CustomerProfile;
+  nominee: CustomerNominee | null;
   account_active: boolean;
   summary: {
     total_invested: number;
@@ -246,6 +257,66 @@ export type AgreementRenewalDetail = {
 
 export type InvestmentDecision = 'approve' | 'hold' | 'reject';
 export type RenewalDecision = 'approve' | 'reject';
+
+export type AgreementBranch = 'ballari' | 'raichur';
+
+export type ChequeFieldPresets = {
+  cheque_nos: string[];
+  bank_names: string[];
+  bank_addresses: string[];
+};
+
+export type AgreementInputs = {
+  branch: AgreementBranch;
+  chequeNo: string;
+  chequeBankName: string;
+  chequeBankAddress: string;
+};
+
+export type AgreementPayload = {
+  agreement: {
+    id: string;
+    branch: AgreementBranch;
+    agreement_date: string;
+    period_from: string;
+    period_to: string;
+    cheque_no: string;
+    cheque_bank_name: string;
+    cheque_bank_address: string;
+    renewal_id: string | null;
+  };
+  investment: {
+    id: string;
+    code: string | null;
+    plan_name: string;
+    fund_amount: number;
+    interest_rate: number;
+    tds_percent: number;
+  };
+  customer: {
+    customer_id: string | null;
+    full_name: string;
+    address: string;
+    email: string;
+    mobile: string;
+    pan: string;
+    aadhaar: string;
+  };
+  bank: {
+    holder: string;
+    account_number: string;
+    ifsc_code: string;
+    bank_name: string;
+    branch_name: string;
+  } | null;
+  nominee: {
+    name: string;
+    relation: string;
+    aadhaar: string;
+    pan: string;
+    mobile: string;
+  } | null;
+};
 
 export type WithdrawalFilter = 'pending' | 'approved' | 'rejected';
 

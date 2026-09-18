@@ -7,6 +7,7 @@ import type {
   CustomerListParams,
   CustomerListResult,
   CustomerListRow,
+  CustomerNominee,
   CustomerProfile,
 } from '../types/admin';
 import { parseRpcError } from '../utils/format';
@@ -78,6 +79,18 @@ function mapProfile(row: Record<string, unknown>): CustomerProfile {
     state: String(row.state ?? ''),
     pin_code: String(row.pin_code ?? ''),
     pan_number: row.pan_number ? String(row.pan_number) : null,
+    aadhaar_number: row.aadhaar_number ? String(row.aadhaar_number) : null,
+  };
+}
+
+function mapNominee(row: Record<string, unknown>): CustomerNominee {
+  return {
+    id: String(row.id ?? ''),
+    nominee_name: String(row.nominee_name ?? ''),
+    relationship: String(row.relationship ?? ''),
+    nominee_aadhaar: row.nominee_aadhaar ? String(row.nominee_aadhaar) : null,
+    nominee_pan: row.nominee_pan ? String(row.nominee_pan) : null,
+    nominee_mobile: row.nominee_mobile ? String(row.nominee_mobile) : null,
   };
 }
 
@@ -139,8 +152,11 @@ export async function getCustomerDetails(userId: string): Promise<CustomerDetail
 
   const summary = (payload.summary ?? {}) as Record<string, unknown>;
 
+  const nominee = payload.nominee as Record<string, unknown> | null;
+
   return {
     profile: mapProfile(profile),
+    nominee: nominee ? mapNominee(nominee) : null,
     account_active: Boolean(payload.account_active),
     summary: {
       total_invested: asNumber(summary.total_invested),
@@ -170,6 +186,12 @@ export type UpdateCustomerProfileInput = {
   state: string;
   pinCode: string;
   panNumber: string;
+  aadhaarNumber: string;
+  nomineeName: string;
+  nomineeRelationship: string;
+  nomineeAadhaar: string;
+  nomineePan: string;
+  nomineeMobile: string;
 };
 
 export async function updateCustomerProfile(input: UpdateCustomerProfileInput): Promise<void> {
@@ -184,6 +206,12 @@ export async function updateCustomerProfile(input: UpdateCustomerProfileInput): 
     p_state: input.state,
     p_pin_code: input.pinCode,
     p_pan_number: input.panNumber || null,
+    p_aadhaar_number: input.aadhaarNumber || null,
+    p_nominee_name: input.nomineeName || null,
+    p_nominee_relationship: input.nomineeRelationship || null,
+    p_nominee_aadhaar: input.nomineeAadhaar || null,
+    p_nominee_pan: input.nomineePan || null,
+    p_nominee_mobile: input.nomineeMobile || null,
   });
 
   if (error) {
@@ -268,8 +296,13 @@ export type CreateCustomerInput = {
   email: string;
   mobile: string;
   dateOfBirth: string;
+  panNumber: string;
+  aadhaarNumber: string;
   nomineeName: string;
   nomineeRelationship: string;
+  nomineeAadhaar: string;
+  nomineePan: string;
+  nomineeMobile: string;
   address: string;
   accountHolderName: string;
   accountNumber: string;
@@ -292,8 +325,13 @@ export async function createCustomer(
     p_email: input.email,
     p_mobile: input.mobile,
     p_date_of_birth: input.dateOfBirth,
+    p_pan_number: input.panNumber,
+    p_aadhaar_number: input.aadhaarNumber,
     p_nominee_name: input.nomineeName,
     p_nominee_relationship: input.nomineeRelationship,
+    p_nominee_aadhaar: input.nomineeAadhaar || null,
+    p_nominee_pan: input.nomineePan || null,
+    p_nominee_mobile: input.nomineeMobile || null,
     p_address: input.address,
     p_account_holder_name: input.accountHolderName,
     p_account_number: input.accountNumber,

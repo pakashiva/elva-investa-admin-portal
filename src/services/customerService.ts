@@ -75,9 +75,6 @@ function mapProfile(row: Record<string, unknown>): CustomerProfile {
     email_address: String(row.email_address ?? ''),
     date_of_birth: String(row.date_of_birth ?? ''),
     address: String(row.address ?? ''),
-    city: String(row.city ?? ''),
-    state: String(row.state ?? ''),
-    pin_code: String(row.pin_code ?? ''),
     pan_number: row.pan_number ? String(row.pan_number) : null,
     aadhaar_number: row.aadhaar_number ? String(row.aadhaar_number) : null,
   };
@@ -182,9 +179,6 @@ export type UpdateCustomerProfileInput = {
   mobile: string;
   dateOfBirth: string;
   address: string;
-  city: string;
-  state: string;
-  pinCode: string;
   panNumber: string;
   aadhaarNumber: string;
   nomineeName: string;
@@ -202,9 +196,10 @@ export async function updateCustomerProfile(input: UpdateCustomerProfileInput): 
     p_mobile: input.mobile,
     p_date_of_birth: input.dateOfBirth,
     p_address: input.address,
-    p_city: input.city,
-    p_state: input.state,
-    p_pin_code: input.pinCode,
+    // Legacy RPC args — ignored by the server; address is the only location field.
+    p_city: null,
+    p_state: null,
+    p_pin_code: null,
     p_pan_number: input.panNumber || null,
     p_aadhaar_number: input.aadhaarNumber || null,
     p_nominee_name: input.nomineeName || null,

@@ -92,9 +92,6 @@ export type CustomerProfile = {
   email_address: string;
   date_of_birth: string;
   address: string;
-  city: string;
-  state: string;
-  pin_code: string;
   pan_number: string | null;
   aadhaar_number: string | null;
 };

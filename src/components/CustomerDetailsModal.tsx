@@ -38,9 +38,6 @@ type ProfileForm = {
   mobile: string;
   dateOfBirth: string;
   address: string;
-  city: string;
-  state: string;
-  pinCode: string;
   panNumber: string;
   aadhaarNumber: string;
   nomineeName: string;
@@ -80,9 +77,6 @@ function profileToForm(
     mobile: digitsOnly(profile.mobile_number || '').slice(-10),
     dateOfBirth: toDobInput(profile.date_of_birth),
     address: profile.address || '',
-    city: profile.city === '—' ? '' : profile.city || '',
-    state: profile.state === '—' ? '' : profile.state || '',
-    pinCode: profile.pin_code === '000000' ? '' : profile.pin_code || '',
     panNumber: profile.pan_number || '',
     aadhaarNumber: digitsOnly(profile.aadhaar_number || ''),
     nomineeName: nominee?.nominee_name || '',
@@ -217,9 +211,6 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
         mobile: digitsOnly(profileForm.mobile),
         dateOfBirth: profileForm.dateOfBirth,
         address: profileForm.address.trim(),
-        city: profileForm.city.trim() || '—',
-        state: profileForm.state.trim() || '—',
-        pinCode: profileForm.pinCode.trim() || '000000',
         panNumber: profileForm.panNumber.trim().toUpperCase(),
         aadhaarNumber: digitsOnly(profileForm.aadhaarNumber),
         nomineeName: profileForm.nomineeName.trim(),
@@ -497,31 +488,9 @@ export function CustomerDetailsModal({ userId, neighbors, onClose, onNavigate }:
                         onChange={(v) => setProfileForm({ ...profileForm, address: v })}
                         disabled={saving}
                       />
-                      <EditField
-                        label="CITY"
-                        value={profileForm.city}
-                        onChange={(v) => setProfileForm({ ...profileForm, city: v })}
-                        disabled={saving}
-                      />
-                      <EditField
-                        label="STATE"
-                        value={profileForm.state}
-                        onChange={(v) => setProfileForm({ ...profileForm, state: v })}
-                        disabled={saving}
-                      />
-                      <EditField
-                        label="PIN CODE"
-                        value={profileForm.pinCode}
-                        onChange={(v) => setProfileForm({ ...profileForm, pinCode: digitsOnly(v).slice(0, 6) })}
-                        disabled={saving}
-                      />
                     </div>
                   ) : (
-                    <p>
-                      {[data.profile.address, data.profile.city, data.profile.state, data.profile.pin_code]
-                        .filter((part) => part && part !== '—' && part !== '000000')
-                        .join(', ') || '—'}
-                    </p>
+                    <p>{data.profile.address?.trim() || '—'}</p>
                   )}
                 </article>
 

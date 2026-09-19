@@ -6,7 +6,7 @@ import { ErrorBanner } from '../components/States';
 import { TdsQuarterChart } from '../components/TdsQuarterChart';
 import { useTdsDashboard } from '../hooks/useTdsDashboard';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
-import { formatInr, formatTdsRate } from '../utils/format';
+import { formatDate, formatInr, formatTdsRate } from '../utils/format';
 
 function TdsKpi({
   label,
@@ -31,9 +31,18 @@ function TdsKpi({
   );
 }
 
+function breakdownLine(interest: number, referral: number): string {
+  return `Interest ${formatInr(interest)} + Referral ${formatInr(referral)}`;
+}
+
 export function TdsPage() {
   const { onOpenMenu } = useOutletContext<AdminOutletContext>();
   const { data, isLoading, error, reload } = useTdsDashboard();
+
+  const interestFyTotal =
+    data?.rows.reduce((sum, row) => sum + row.tds_amount, 0) ?? 0;
+  const referralFyTotal =
+    data?.referralRows.reduce((sum, row) => sum + row.tds_amount, 0) ?? 0;
 
   return (
     <>
@@ -69,21 +78,27 @@ export function TdsPage() {
             <TdsKpi
               label="TOTAL TDS DEDUCTED"
               value={formatInr(data.kpis.totalTds)}
-              subtext="Inception to date"
+              subtext={breakdownLine(
+                data.kpis.totalInterestTds,
+                data.kpis.totalReferralTds
+              )}
               tone="orange"
               icon={<Calculator size={18} />}
             />
             <TdsKpi
               label="CURRENT MONTH TDS"
               value={formatInr(data.kpis.currentMonthTds)}
-              subtext="Deducted in current cycle"
+              subtext={breakdownLine(
+                data.kpis.monthInterestTds,
+                data.kpis.monthReferralTds
+              )}
               tone="green"
               icon={<CalendarDays size={18} />}
             />
             <TdsKpi
               label="CURRENT FY TDS"
               value={formatInr(data.kpis.currentFyTds)}
-              subtext={data.kpis.fyLabel || 'Current financial year'}
+              subtext={breakdownLine(data.kpis.fyInterestTds, data.kpis.fyReferralTds)}
               tone="purple"
               icon={<FilePenLine size={18} />}
             />
@@ -91,48 +106,119 @@ export function TdsPage() {
         )}
       </section>
 
+      {!isLoading && data ? (
+        <p className="tds-math-hint">
+          Current FY = Interest filings {formatInr(data.kpis.fyInterestTds)} + Referral TDS{' '}
+          {formatInr(data.kpis.fyReferralTds)} ={' '}
+          <strong>{formatInr(data.kpis.currentFyTds)}</strong>
+          {data.kpis.fyLabel ? ` · ${data.kpis.fyLabel}` : ''}
+        </p>
+      ) : null}
+
       <section className="tds-layout">
-        <article className="card tds-table-card">
-          <h2>TDS Deductions & Filings</h2>
-          {isLoading ? (
-            <div className="state-box">Loading filings…</div>
-          ) : !data || data.rows.length === 0 ? (
-            <div className="state-box">No completed interest periods in the current financial year.</div>
-          ) : (
-            <div style={{ overflowX: 'auto' }}>
-              <table className="data-table tds-table">
-                <thead>
-                  <tr>
-                    <th>CUSTOMER NAME</th>
-                    <th>INVESTMENT ID</th>
-                    <th>PRINCIPAL</th>
-                    <th>GROSS INT.</th>
-                    <th>TDS RATE</th>
-                    <th>TDS AMOUNT</th>
-                    <th>PERIOD</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {data.rows.map((row) => (
-                    <tr key={`${row.investment_id}-${row.quarter}`}>
-                      <td>
-                        <strong>{row.customer_name}</strong>
-                      </td>
-                      <td>{row.investment_code}</td>
-                      <td>{formatInr(row.principal)}</td>
-                      <td>{formatInr(row.gross_interest)}</td>
-                      <td>{formatTdsRate(row.tds_percent)}</td>
-                      <td>
-                        <strong>{formatInr(row.tds_amount)}</strong>
-                      </td>
-                      <td>{row.period}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="tds-tables-stack">
+          <article className="card tds-table-card">
+            <div className="tds-table-head">
+              <h2>Interest TDS (investments)</h2>
+              {!isLoading && data ? (
+                <span className="tds-table-total">
+                  FY total {formatInr(interestFyTotal)}
+                </span>
+              ) : null}
             </div>
-          )}
-        </article>
+            {isLoading ? (
+              <div className="state-box">Loading filings…</div>
+            ) : !data || data.rows.length === 0 ? (
+              <div className="state-box">
+                No completed interest periods in the current financial year.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="data-table tds-table">
+                  <thead>
+                    <tr>
+                      <th>CUSTOMER NAME</th>
+                      <th>INVESTMENT ID</th>
+                      <th>PRINCIPAL</th>
+                      <th>GROSS INT.</th>
+                      <th>TDS RATE</th>
+                      <th>TDS AMOUNT</th>
+                      <th>PERIOD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.rows.map((row) => (
+                      <tr key={`${row.investment_id}-${row.quarter}`}>
+                        <td>
+                          <strong>{row.customer_name}</strong>
+                        </td>
+                        <td>{row.investment_code}</td>
+                        <td>{formatInr(row.principal)}</td>
+                        <td>{formatInr(row.gross_interest)}</td>
+                        <td>{formatTdsRate(row.tds_percent)}</td>
+                        <td>
+                          <strong>{formatInr(row.tds_amount)}</strong>
+                        </td>
+                        <td>{row.period}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
+
+          <article className="card tds-table-card">
+            <div className="tds-table-head">
+              <h2>Referral TDS</h2>
+              {!isLoading && data ? (
+                <span className="tds-table-total">
+                  FY total {formatInr(referralFyTotal)}
+                </span>
+              ) : null}
+            </div>
+            {isLoading ? (
+              <div className="state-box">Loading referral TDS…</div>
+            ) : !data || data.referralRows.length === 0 ? (
+              <div className="state-box">
+                No referral TDS in the current financial year.
+              </div>
+            ) : (
+              <div style={{ overflowX: 'auto' }}>
+                <table className="data-table tds-table">
+                  <thead>
+                    <tr>
+                      <th>REFERRER</th>
+                      <th>REFERRED</th>
+                      <th>INVESTMENT</th>
+                      <th>GROSS BONUS</th>
+                      <th>TDS RATE</th>
+                      <th>TDS AMOUNT</th>
+                      <th>PERIOD</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.referralRows.map((row) => (
+                      <tr key={row.id}>
+                        <td>
+                          <strong>{row.referrer_name}</strong>
+                        </td>
+                        <td>{row.referred_name}</td>
+                        <td>{row.investment_code}</td>
+                        <td>{formatInr(row.gross_bonus)}</td>
+                        <td>{formatTdsRate(row.tds_rate)}</td>
+                        <td>
+                          <strong>{formatInr(row.tds_amount)}</strong>
+                        </td>
+                        <td title={formatDate(row.credited_on)}>{row.period}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </article>
+        </div>
 
         {isLoading ? (
           <section className="card tds-chart-card">

@@ -364,6 +364,24 @@ export type TdsFilingRow = {
   period: string;
 };
 
+export type TdsReferralFilingRow = {
+  id: string;
+  referrer_name: string;
+  referred_name: string;
+  investment_id: string;
+  investment_code: string;
+  referral_code: string;
+  capital_amount: number;
+  gross_bonus: number;
+  tds_rate: number;
+  tds_amount: number;
+  net_bonus: number;
+  status: string;
+  credited_on: string;
+  quarter: number;
+  period: string;
+};
+
 export type TdsQuarterSlice = {
   quarter: number;
   label: string;
@@ -374,12 +392,19 @@ export type TdsQuarterSlice = {
 export type TdsDashboardData = {
   kpis: {
     totalTds: number;
+    totalInterestTds: number;
+    totalReferralTds: number;
     currentMonthTds: number;
+    monthInterestTds: number;
+    monthReferralTds: number;
     currentFyTds: number;
+    fyInterestTds: number;
+    fyReferralTds: number;
     fyLabel: string;
     fyShort: string;
   };
   rows: TdsFilingRow[];
+  referralRows: TdsReferralFilingRow[];
   quarters: TdsQuarterSlice[];
 };
 

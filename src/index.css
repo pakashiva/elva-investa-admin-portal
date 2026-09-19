@@ -1635,6 +1635,38 @@ a {
   align-items: start;
 }
 
+.tds-tables-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+.tds-math-hint {
+  margin: 12px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.tds-table-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tds-table-head h2 {
+  margin: 0;
+}
+
+.tds-table-total {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
 .tds-table-card,
 .tds-chart-card {
   padding: 20px 22px 12px;
@@ -1644,6 +1676,10 @@ a {
 .tds-chart-card h2 {
   margin: 0 0 14px;
   font-size: 18px;
+}
+
+.tds-table-card .tds-table-head h2 {
+  margin: 0;
 }
 
 .tds-table tbody tr,

@@ -1,4 +1,4 @@
-import { FileDown } from 'lucide-react';
+import { ArrowLeft, FileDown } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useOutletContext, useParams } from 'react-router-dom';
 import { AgreementDetailsModal } from '../components/AgreementDetailsModal';
@@ -231,6 +231,16 @@ export function InvestmentReviewPage() {
         }
         showSearch
         onOpenMenu={onOpenMenu}
+        actions={
+          <button
+            type="button"
+            className="ghost-btn"
+            onClick={() => navigate(-1)}
+            aria-label="Go back"
+          >
+            <ArrowLeft size={16} /> Back
+          </button>
+        }
       />
 
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}

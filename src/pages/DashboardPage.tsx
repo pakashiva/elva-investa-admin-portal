@@ -26,7 +26,6 @@ export function DashboardPage() {
       <AppHeader
         title="Operational Dashboard"
         subtitle="Overview of systemic capital, actions, and pending flows."
-        showSearch
         onOpenMenu={onOpenMenu}
       />
 

@@ -154,14 +154,15 @@ function validateForm(form: FormState): FieldErrors {
   }
   if (!form.nomineeName.trim()) errors.nomineeName = 'Nominee name is required.';
   if (!form.nomineeRelationship) errors.nomineeRelationship = 'Select a relationship.';
-  if (form.nomineeAadhaar && digitsOnly(form.nomineeAadhaar).length !== 12) {
-    errors.nomineeAadhaar = 'Aadhaar must be 12 digits.';
+  if (digitsOnly(form.nomineeAadhaar).length !== 12) {
+    errors.nomineeAadhaar = 'Nominee Aadhaar must be 12 digits.';
   }
-  if (form.nomineePan && validatePan(form.nomineePan)) {
-    errors.nomineePan = 'PAN must be like ABCDE1234F.';
+  const nomineePanError = validatePan(form.nomineePan);
+  if (nomineePanError) {
+    errors.nomineePan = nomineePanError.replace('PAN', 'Nominee PAN');
   }
-  if (form.nomineeMobile && !/^[6-9]\d{9}$/.test(digitsOnly(form.nomineeMobile))) {
-    errors.nomineeMobile = 'Enter a 10-digit mobile number.';
+  if (!/^[6-9]\d{9}$/.test(digitsOnly(form.nomineeMobile))) {
+    errors.nomineeMobile = 'Enter a valid 10-digit nominee mobile.';
   }
   if (!form.address.trim()) errors.address = 'Full address is required.';
   if (!form.accountHolderName.trim()) errors.accountHolderName = 'Account holder name is required.';
@@ -307,7 +308,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
             <h3>Personal Details</h3>
             <div className="create-grid">
               <label className="create-field">
-                <span>Full Name</span>
+                <span>Full Name *</span>
                 <input
                   value={form.fullName}
                   onChange={(event) => update('fullName', event.target.value)}
@@ -317,7 +318,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Email Address</span>
+                <span>Email Address *</span>
                 <input
                   type="email"
                   value={form.email}
@@ -328,7 +329,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Phone Number</span>
+                <span>Phone Number *</span>
                 <div className="phone-input">
                   <span>+91</span>
                   <input
@@ -344,7 +345,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Date of Birth</span>
+                <span>Date of Birth *</span>
                 <div className="dob-input">
                   <input
                     ref={dobInputRef}
@@ -363,7 +364,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>PAN Number</span>
+                <span>PAN Number *</span>
                 <input
                   value={form.panNumber}
                   onChange={(event) =>
@@ -378,7 +379,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Aadhaar Number</span>
+                <span>Aadhaar Number *</span>
                 <input
                   inputMode="numeric"
                   value={form.aadhaarNumber}
@@ -396,7 +397,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
             <h3>Nominee Details</h3>
             <div className="create-grid">
               <label className="create-field">
-                <span>Nominee Name</span>
+                <span>Nominee Name *</span>
                 <input
                   value={form.nomineeName}
                   onChange={(event) => update('nomineeName', event.target.value)}
@@ -406,7 +407,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Nominee Relationship</span>
+                <span>Nominee Relationship *</span>
                 <select
                   value={form.nomineeRelationship}
                   onChange={(event) => update('nomineeRelationship', event.target.value)}
@@ -422,7 +423,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Nominee Aadhaar (optional)</span>
+                <span>Nominee Aadhaar *</span>
                 <input
                   inputMode="numeric"
                   value={form.nomineeAadhaar}
@@ -435,7 +436,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Nominee PAN (optional)</span>
+                <span>Nominee PAN *</span>
                 <input
                   value={form.nomineePan}
                   onChange={(event) =>
@@ -450,7 +451,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Nominee Phone (optional)</span>
+                <span>Nominee Phone *</span>
                 <div className="phone-input">
                   <span>+91</span>
                   <input
@@ -470,7 +471,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
           <section className="create-section">
             <h3>Address</h3>
             <label className="create-field">
-              <span>Full Address</span>
+              <span>Full Address *</span>
               <textarea
                 rows={3}
                 value={form.address}
@@ -485,7 +486,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
             <h3>Bank Details</h3>
             <div className="create-grid">
               <label className="create-field">
-                <span>Account Holder Name</span>
+                <span>Account Holder Name *</span>
                 <input
                   value={form.accountHolderName}
                   onChange={(event) => update('accountHolderName', event.target.value)}
@@ -495,7 +496,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Account Number</span>
+                <span>Account Number *</span>
                 <input
                   inputMode="numeric"
                   value={form.accountNumber}
@@ -508,7 +509,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>IFSC Code</span>
+                <span>IFSC Code *</span>
                 <input
                   value={form.ifscCode}
                   onChange={(event) =>
@@ -520,7 +521,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Branch Name</span>
+                <span>Branch Name *</span>
                 <input
                   value={form.branchName}
                   onChange={(event) => update('branchName', event.target.value)}
@@ -530,7 +531,7 @@ export function CreateCustomerModal({ open, onClose, onCreated }: Props) {
               </label>
 
               <label className="create-field">
-                <span>Account Type</span>
+                <span>Account Type *</span>
                 <select
                   value={form.accountType}
                   onChange={(event) =>

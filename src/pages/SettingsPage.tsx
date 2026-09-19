@@ -117,8 +117,6 @@ export function SettingsPage() {
       {portal.notice ? <div className="notice-box">{portal.notice}</div> : null}
 
       <form className="card settings-card" onSubmit={(event) => void onSave(event)}>
-        <h2>Settings</h2>
-
         {portal.isLoading ? (
           <p className="state-box">Loading settings…</p>
         ) : (

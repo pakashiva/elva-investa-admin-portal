@@ -45,9 +45,19 @@ export function AppHeader({
           </form>
         ) : null}
         {actions}
-        <Link to="/notifications" className="icon-btn" aria-label="Notifications">
-          <Bell size={18} />
-          {unreadCount > 0 ? <span className="dot" /> : null}
+        <Link
+          to="/notifications"
+          className="icon-btn notify-btn"
+          aria-label={
+            unreadCount > 0
+              ? `${unreadCount > 9 ? '9+' : unreadCount} unread notifications`
+              : 'Notifications'
+          }
+        >
+          <Bell size={23} />
+          {unreadCount > 0 ? (
+            <span className="notify-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>
+          ) : null}
         </Link>
         <div className="profile-chip">
           <img className="avatar" src="/avatar.png" alt="" />

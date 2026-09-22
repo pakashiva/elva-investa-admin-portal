@@ -1,7 +1,9 @@
 import { supabase } from '../lib/supabase';
 import type {
+  AgreementBranch,
   AgreementRenewalDetail,
   AgreementRenewalMode,
+  ApprovedInvestmentEdit,
   InvestmentDecision,
   InvestmentQueueKind,
   InvestmentRequestDetail,
@@ -10,6 +12,7 @@ import type {
   InvestmentRequestListRow,
   InvestmentRequestStatus,
   RenewalDecision,
+  UpdateApprovedInvestmentInput,
 } from '../types/admin';
 import { parseRpcError } from '../utils/format';
 
@@ -211,6 +214,134 @@ export async function updateInvestmentTerms(
     p_tds_percent: tdsPercent,
     p_payout_day: payoutDay,
     p_referral_rate: referralRate,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+}
+
+function asAgreementBranch(value: unknown): AgreementBranch {
+  return value === 'raichur' ? 'raichur' : 'ballari';
+}
+
+function localDigits(value: unknown): string {
+  const digits = String(value ?? '').replace(/\D/g, '');
+  return digits.length > 10 ? digits.slice(-10) : digits;
+}
+
+export async function getApprovedInvestmentEdit(
+  id: string
+): Promise<ApprovedInvestmentEdit> {
+  const { data, error } = await supabase.rpc('admin_get_approved_investment_edit', {
+    p_id: id,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+
+  const row = (data ?? {}) as Record<string, unknown>;
+  const customer = (row.customer ?? {}) as Record<string, unknown>;
+  const bank = row.bank as Record<string, unknown> | null;
+  const nominee = row.nominee as Record<string, unknown> | null;
+  const agreement = row.agreement as Record<string, unknown> | null;
+  const dob = customer.date_of_birth ? String(customer.date_of_birth).slice(0, 10) : '';
+
+  return {
+    id: String(row.id ?? ''),
+    code: row.code ? String(row.code) : null,
+    request_id: row.request_id ? String(row.request_id) : null,
+    status: asStatus(row.status),
+    user_id: String(row.user_id ?? ''),
+    customer_id: row.customer_id ? String(row.customer_id) : null,
+    plan_name: String(row.plan_name ?? ''),
+    fund_amount: asNumber(row.fund_amount),
+    interest_rate: asNumber(row.interest_rate),
+    tds_percent: asNumber(row.tds_percent),
+    payout_day: asPayoutDay(row.payout_day),
+    customer: {
+      full_name: String(customer.full_name ?? ''),
+      email: String(customer.email ?? ''),
+      mobile: localDigits(customer.mobile),
+      date_of_birth: dob,
+      address: String(customer.address ?? ''),
+      pan: String(customer.pan ?? ''),
+      aadhaar: String(customer.aadhaar ?? '').replace(/\D/g, ''),
+    },
+    bank: bank
+      ? {
+          id: String(bank.id ?? ''),
+          bank_name: String(bank.bank_name ?? ''),
+          account_number: String(bank.account_number ?? ''),
+          ifsc_code: String(bank.ifsc_code ?? ''),
+          account_type: String(bank.account_type ?? 'Savings'),
+          account_holder_name: String(bank.account_holder_name ?? ''),
+          branch_name: String(bank.branch_name ?? ''),
+        }
+      : null,
+    nominee: nominee
+      ? {
+          name: String(nominee.name ?? ''),
+          relation: String(nominee.relation ?? ''),
+          aadhaar: String(nominee.aadhaar ?? '').replace(/\D/g, ''),
+          pan: String(nominee.pan ?? ''),
+          mobile: localDigits(nominee.mobile),
+        }
+      : null,
+    agreement: agreement
+      ? {
+          branch: asAgreementBranch(agreement.branch),
+          cheque_no: String(agreement.cheque_no ?? ''),
+          cheque_bank_name: String(agreement.cheque_bank_name ?? ''),
+          cheque_bank_address: String(agreement.cheque_bank_address ?? ''),
+        }
+      : null,
+  };
+}
+
+export async function updateApprovedInvestment(
+  input: UpdateApprovedInvestmentInput
+): Promise<void> {
+  const { error } = await supabase.rpc('admin_update_approved_investment', {
+    p_id: input.id,
+    p_full_name: input.fullName.trim(),
+    p_email: input.email.trim(),
+    p_mobile: input.mobile.trim(),
+    p_date_of_birth: input.dateOfBirth,
+    p_address: input.address.trim(),
+    p_pan_number: input.panNumber.trim(),
+    p_aadhaar_number: input.aadhaarNumber.trim(),
+    p_nominee_name: input.nomineeName.trim(),
+    p_nominee_relationship: input.nomineeRelationship.trim(),
+    p_nominee_aadhaar: input.nomineeAadhaar.trim(),
+    p_nominee_pan: input.nomineePan.trim(),
+    p_nominee_mobile: input.nomineeMobile.trim(),
+    p_plan_name: input.planName.trim(),
+    p_fund_amount: input.fundAmount,
+    p_interest_rate: input.interestRate,
+    p_tds_percent: input.tdsPercent,
+    p_payout_day: input.payoutDay,
+    p_bank_name: input.bankName.trim(),
+    p_account_number: input.accountNumber.trim(),
+    p_ifsc_code: input.ifscCode.trim(),
+    p_account_type: input.accountType,
+    p_account_holder_name: input.accountHolderName.trim(),
+    p_branch_name: input.branchName.trim(),
+    p_agreement_branch: input.agreementBranch ?? null,
+    p_cheque_no: input.chequeNo ?? null,
+    p_cheque_bank_name: input.chequeBankName ?? null,
+    p_cheque_bank_address: input.chequeBankAddress ?? null,
+  });
+
+  if (error) {
+    throw new Error(parseRpcError(error));
+  }
+}
+
+export async function cancelApprovedInvestment(id: string): Promise<void> {
+  const { error } = await supabase.rpc('admin_cancel_approved_investment', {
+    p_id: id,
   });
 
   if (error) {

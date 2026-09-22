@@ -229,18 +229,7 @@ export function InvestmentReviewPage() {
             ? `Awaiting decision for ${displayRequestId(detail?.request_id)}.`
             : `Saved terms for ${displayRequestId(detail?.request_id)} · ${detail?.status ?? ''}.`
         }
-        showSearch
         onOpenMenu={onOpenMenu}
-        actions={
-          <button
-            type="button"
-            className="ghost-btn"
-            onClick={() => navigate(-1)}
-            aria-label="Go back"
-          >
-            <ArrowLeft size={16} /> Back
-          </button>
-        }
       />
 
       {error ? <ErrorBanner message={error} onRetry={() => void load()} /> : null}
@@ -251,7 +240,17 @@ export function InvestmentReviewPage() {
         <div className="review-grid">
           <div className="review-col">
             <article className="card review-card">
-              <h3>Customer Information</h3>
+              <div className="review-card-top">
+                <button
+                  type="button"
+                  className="review-back-btn"
+                  onClick={() => navigate(-1)}
+                  aria-label="Go back"
+                >
+                  <ArrowLeft size={18} />
+                </button>
+                <h3>Customer Information</h3>
+              </div>
               <div className="review-customer">
                 <img className="avatar" src="/avatar.png" alt="" />
                 <div>

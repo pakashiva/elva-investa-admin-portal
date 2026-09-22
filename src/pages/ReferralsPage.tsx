@@ -5,6 +5,7 @@ import { useOutletContext } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
 import { ReferralDetailModal } from '../components/ReferralDetailModal';
 import { ErrorBanner } from '../components/States';
+import { TablePager } from '../components/TablePager';
 import { useReferrals } from '../hooks/useReferrals';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import type { ReferralListRow } from '../types/admin';
@@ -105,19 +106,6 @@ export function ReferralsPage() {
         )}
       </section>
 
-      <section className="referral-rate-bar">
-        <div>
-          <strong>Default Commission Rate</strong>
-          <p>
-            Currently configured at {formatTdsRate(settings?.referral_rate ?? 0.01)} on
-            initial investment amount.
-          </p>
-        </div>
-        <span className="referral-rate-badge">
-          {formatTdsRate(settings?.referral_rate ?? 0.01)} Fixed
-        </span>
-      </section>
-
       <section className="table-shell" style={{ marginTop: 16 }}>
         {referrals.isLoading ? (
           <div className="state-box">Loading referrals…</div>
@@ -170,24 +158,12 @@ export function ReferralsPage() {
 
         <div className="table-footer">
           <span>{total === 0 ? '0 referrals' : `Showing ${from}–${to} of ${total}`}</span>
-          <div className="pager">
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={referrals.page <= 1}
-              onClick={() => referrals.setPage(Math.max(1, referrals.page - 1))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={referrals.page >= referrals.pageCount || total === 0}
-              onClick={() => referrals.setPage(referrals.page + 1)}
-            >
-              Next
-            </button>
-          </div>
+          <TablePager
+            page={referrals.page}
+            pageCount={referrals.pageCount}
+            total={total}
+            onPageChange={referrals.setPage}
+          />
         </div>
       </section>
 

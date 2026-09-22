@@ -257,6 +257,82 @@ export type RenewalDecision = 'approve' | 'reject';
 
 export type AgreementBranch = 'ballari' | 'raichur';
 
+export type ApprovedInvestmentEdit = {
+  id: string;
+  code: string | null;
+  request_id: string | null;
+  status: InvestmentRequestStatus;
+  user_id: string;
+  customer_id: string | null;
+  plan_name: string;
+  fund_amount: number;
+  interest_rate: number;
+  tds_percent: number;
+  payout_day: number;
+  customer: {
+    full_name: string;
+    email: string;
+    mobile: string;
+    date_of_birth: string;
+    address: string;
+    pan: string;
+    aadhaar: string;
+  };
+  bank: {
+    id: string;
+    bank_name: string;
+    account_number: string;
+    ifsc_code: string;
+    account_type: string;
+    account_holder_name: string;
+    branch_name: string;
+  } | null;
+  nominee: {
+    name: string;
+    relation: string;
+    aadhaar: string;
+    pan: string;
+    mobile: string;
+  } | null;
+  agreement: {
+    branch: AgreementBranch;
+    cheque_no: string;
+    cheque_bank_name: string;
+    cheque_bank_address: string;
+  } | null;
+};
+
+export type UpdateApprovedInvestmentInput = {
+  id: string;
+  fullName: string;
+  email: string;
+  mobile: string;
+  dateOfBirth: string;
+  address: string;
+  panNumber: string;
+  aadhaarNumber: string;
+  nomineeName: string;
+  nomineeRelationship: string;
+  nomineeAadhaar: string;
+  nomineePan: string;
+  nomineeMobile: string;
+  planName: string;
+  fundAmount: number;
+  interestRate: number;
+  tdsPercent: number;
+  payoutDay: number;
+  bankName: string;
+  accountNumber: string;
+  ifscCode: string;
+  accountType: 'Savings' | 'Current';
+  accountHolderName: string;
+  branchName: string;
+  agreementBranch?: AgreementBranch | null;
+  chequeNo?: string | null;
+  chequeBankName?: string | null;
+  chequeBankAddress?: string | null;
+};
+
 export type ChequeFieldPresets = {
   cheque_nos: string[];
   bank_names: string[];

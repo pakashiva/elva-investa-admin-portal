@@ -1,14 +1,14 @@
 import {
-  Banknote,
-  CalendarDays,
+  ArrowDownToLine,
+  CalendarClock,
   CalendarRange,
-  CreditCard,
-  FilePenLine,
+  ChartPie,
+  Coins,
   FileSpreadsheet,
-  FileX,
-  Gift,
+  Landmark,
+  Percent,
   Plus,
-  Wallet,
+  Users,
 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useState } from 'react';
@@ -42,44 +42,44 @@ const CATEGORIES: {
     kind: 'investment',
     title: 'Investment Reports',
     description: 'Generate daily, monthly, customer-wise, plan-wise, or cycle-wise metrics.',
-    icon: <Wallet size={18} />,
+    icon: <Landmark size={18} />,
   },
   {
     kind: 'interest',
     title: 'Interest Reports',
     description: 'Analyze total interest payable, interest paid, and upcoming payout cycles.',
-    icon: <CalendarDays size={18} />,
+    icon: <Percent size={18} />,
   },
   {
     kind: 'withdrawal',
     title: 'Withdrawal Reports',
     description: 'Track pending and completed principal / interest withdrawals.',
-    icon: <CreditCard size={18} />,
+    icon: <ArrowDownToLine size={18} />,
   },
   {
     kind: 'tds',
     title: 'TDS Reports',
     description: 'Export detailed Form 16A calculations, customer TDS ledgers, and FY files.',
-    icon: <FileX size={18} />,
+    icon: <Coins size={18} />,
   },
   {
     kind: 'referral',
     title: 'Referrals Reports',
     description: 'Download comprehensive partner referral activities, audits, and commissions.',
-    icon: <Gift size={18} />,
+    icon: <Users size={18} />,
   },
   {
     kind: 'wealth',
     title: 'Wealth Reports',
     description: 'High-level assets under management (AUM) and overall portfolio health metrics.',
-    icon: <FilePenLine size={18} />,
+    icon: <ChartPie size={18} />,
   },
   {
     kind: 'upcoming_payout',
     title: 'Upcoming Payouts (31 Days)',
     description:
       'All Active investments due for interest in the next 31 days — bank, PAN, interest, TDS, and referral commission columns.',
-    icon: <Banknote size={18} />,
+    icon: <CalendarClock size={18} />,
   },
   {
     kind: 'payout_range',
@@ -219,7 +219,7 @@ export function ReportsPage() {
       </section>
 
       <section className="report-params report-payout-params">
-        <strong>Payout date range (for “Payouts by Date Range” only):</strong>
+        <strong>Payout date range </strong>
         <label className="report-select">
           <span>From</span>
           <input

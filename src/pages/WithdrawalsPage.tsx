@@ -4,6 +4,7 @@ import { useOutletContext } from 'react-router-dom';
 import { AppHeader } from '../components/AppHeader';
 import { DecisionResultModal } from '../components/DecisionResultModal';
 import { EmptyState, ErrorBanner } from '../components/States';
+import { TablePager } from '../components/TablePager';
 import { useWithdrawals } from '../hooks/useWithdrawals';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import { decideWithdrawal } from '../services/withdrawalService';
@@ -159,24 +160,12 @@ export function WithdrawalsPage() {
 
         <div className="table-footer">
           <span>{total === 0 ? '0 requests' : `Showing ${from}–${to} of ${total}`}</span>
-          <div className="pager">
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={withdrawals.page <= 1}
-              onClick={() => withdrawals.setPage(Math.max(1, withdrawals.page - 1))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={withdrawals.page >= withdrawals.pageCount || total === 0}
-              onClick={() => withdrawals.setPage(withdrawals.page + 1)}
-            >
-              Next
-            </button>
-          </div>
+          <TablePager
+            page={withdrawals.page}
+            pageCount={withdrawals.pageCount}
+            total={total}
+            onPageChange={withdrawals.setPage}
+          />
         </div>
       </section>
 

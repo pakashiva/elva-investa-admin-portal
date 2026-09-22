@@ -5,6 +5,7 @@ import { AppHeader } from '../components/AppHeader';
 import { CreateCustomerModal } from '../components/CreateCustomerModal';
 import { CustomerDetailsModal } from '../components/CustomerDetailsModal';
 import { EmptyState, ErrorBanner } from '../components/States';
+import { TablePager } from '../components/TablePager';
 import { useCustomers } from '../hooks/useCustomers';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import type { CustomerFilter, CustomerListRow } from '../types/admin';
@@ -220,24 +221,12 @@ export function CustomersPage() {
 
         <div className="table-footer">
           <span>{total === 0 ? '0 customers' : `Showing ${from}–${to} of ${total}`}</span>
-          <div className="pager">
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={page <= 1}
-              onClick={() => setPage(Math.max(1, page - 1))}
-            >
-              Previous
-            </button>
-            <button
-              type="button"
-              className="ghost-btn"
-              disabled={page >= pageCount || total === 0}
-              onClick={() => setPage(page + 1)}
-            >
-              Next
-            </button>
-          </div>
+          <TablePager
+            page={page}
+            pageCount={pageCount}
+            total={total}
+            onPageChange={setPage}
+          />
         </div>
       </section>
 

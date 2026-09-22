@@ -301,6 +301,29 @@ a {
   border-radius: 50%;
 }
 
+.notify-btn {
+  width: 44px;
+  height: 44px;
+}
+
+.notify-badge {
+  position: absolute;
+  top: 4px;
+  right: 2px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-sizing: border-box;
+  border: 2px solid #fff;
+}
+
 .profile-chip {
   display: flex;
   align-items: center;
@@ -667,6 +690,29 @@ a {
 .pager {
   display: flex;
   gap: 8px;
+  align-items: center;
+}
+
+.pager-btn {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+}
+
+.pager-btn:hover:not(:disabled) {
+  background: #f8fafc;
+}
+
+.pager-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .state-box,
@@ -1260,6 +1306,35 @@ a {
 
 .review-card {
   padding: 20px;
+}
+
+.review-card-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.review-card-top h3 {
+  margin: 0;
+}
+
+.review-back-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--text);
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.review-back-btn:hover {
+  background: #f8fafc;
 }
 
 .review-card h3 {
@@ -2496,6 +2571,72 @@ a {
   border-top: 1px solid var(--border);
   flex-shrink: 0;
   background: #fff;
+}
+
+.edit-approved-modal {
+  width: min(780px, 100%);
+  max-height: min(92vh, 960px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.edit-approved-modal .create-customer-body {
+  overflow: auto;
+  flex: 1;
+}
+
+.create-field-span {
+  grid-column: 1 / -1;
+}
+
+.row-menu {
+  position: relative;
+  display: inline-flex;
+}
+
+.row-menu-trigger {
+  width: 36px;
+  height: 36px;
+}
+
+.row-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  min-width: 180px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.14);
+  padding: 6px;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.row-menu-dropdown button {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: var(--text);
+}
+
+.row-menu-dropdown button:hover {
+  background: #f3f5f8;
+}
+
+.row-menu-dropdown button.danger {
+  color: #b42318;
+}
+
+.row-menu-dropdown button.danger:hover {
+  background: #fef3f2;
 }
 
 .create-submit-btn {

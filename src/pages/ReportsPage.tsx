@@ -1,6 +1,7 @@
 import {
   ArrowDownToLine,
   CalendarClock,
+  CalendarDays,
   CalendarRange,
   ChartPie,
   Coins,

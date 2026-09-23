@@ -55,7 +55,7 @@ export function WealthChart({ points, months, onMonthsChange }: Props) {
             <Line
               type="monotone"
               dataKey="wealthCr"
-              stroke="#E4C35A"
+              stroke="#A0883F"
               strokeWidth={3}
               dot={false}
             />

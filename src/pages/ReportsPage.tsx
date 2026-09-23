@@ -65,7 +65,7 @@ const CATEGORIES: {
   },
   {
     kind: 'referral',
-    title: 'Referrals Reports',
+    title: 'Referral Reports',
     description: 'Download comprehensive partner referral activities, audits, and commissions.',
     icon: <Users size={18} />,
   },

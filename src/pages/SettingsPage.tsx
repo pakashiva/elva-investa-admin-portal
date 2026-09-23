@@ -19,8 +19,8 @@ const EMPTY: FormState = {
   merchant_id: '',
   api_key: '',
   api_secret: '',
-  max_single_transaction: 0,
-  daily_transfer_limit: 0,
+  max_single_transaction: 1000000,
+  daily_transfer_limit: 5000000,
 };
 
 function formatAmountInput(value: number): string {
@@ -46,8 +46,6 @@ export function SettingsPage() {
   const [amountText, setAmountText] = useState({
     min: '',
     max: '',
-    single: '',
-    daily: '',
   });
 
   useEffect(() => {
@@ -71,8 +69,6 @@ export function SettingsPage() {
     setAmountText({
       min: formatAmountInput(portal.settings.min_investment_amount),
       max: formatAmountInput(portal.settings.max_investment_amount),
-      single: formatAmountInput(portal.settings.max_single_transaction),
-      daily: formatAmountInput(portal.settings.daily_transfer_limit),
     });
   }, [portal.settings]);
 
@@ -87,8 +83,11 @@ export function SettingsPage() {
         ...form,
         min_investment_amount: parseAmountInput(amountText.min),
         max_investment_amount: parseAmountInput(amountText.max),
-        max_single_transaction: parseAmountInput(amountText.single),
-        daily_transfer_limit: parseAmountInput(amountText.daily),
+        // Unused in product flows — keep existing DB values so save RPC stays valid.
+        max_single_transaction:
+          portal.settings?.max_single_transaction ?? form.max_single_transaction,
+        daily_transfer_limit:
+          portal.settings?.daily_transfer_limit ?? form.daily_transfer_limit,
       });
     } catch {
       /* error banner already set */
@@ -236,38 +235,6 @@ export function SettingsPage() {
                 autoComplete="off"
                 value={form.api_secret}
                 onChange={(event) => updateField('api_secret', event.target.value)}
-              />
-            </label>
-
-            <h3>Transaction Limits</h3>
-
-            <label className="settings-field">
-              <span>Max Single Transaction (₹)</span>
-              <input
-                className="settings-input"
-                value={amountText.single ? `₹${amountText.single}` : ''}
-                onChange={(event) =>
-                  setAmountText((prev) => ({
-                    ...prev,
-                    single: formatAmountInput(parseAmountInput(event.target.value)),
-                  }))
-                }
-                placeholder="₹10,00,000"
-              />
-            </label>
-
-            <label className="settings-field">
-              <span>Daily Transfer Limit (₹)</span>
-              <input
-                className="settings-input"
-                value={amountText.daily ? `₹${amountText.daily}` : ''}
-                onChange={(event) =>
-                  setAmountText((prev) => ({
-                    ...prev,
-                    daily: formatAmountInput(parseAmountInput(event.target.value)),
-                  }))
-                }
-                placeholder="₹50,00,000"
               />
             </label>
 

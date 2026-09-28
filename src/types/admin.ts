@@ -204,7 +204,9 @@ export type InvestmentRequestDetail = {
   fund_amount: number;
   interest_rate: number;
   tds_percent: number;
-  payout_day: number;
+  payout_day: number | null;
+  payout_day_overridden: boolean;
+  invested_date: string | null;
   created_at: string;
   user_id: string;
   customer_name: string;

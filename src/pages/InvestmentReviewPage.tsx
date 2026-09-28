@@ -24,6 +24,7 @@ import type {
 import {
   displayCustomerId,
   displayRequestId,
+  formatDate,
   formatInr,
   formatPercent,
   formatTdsRate,
@@ -31,8 +32,57 @@ import {
 } from '../utils/format';
 
 const RATE_OPTIONS = [0.04, 0.05, 0.06, 0.07, 0.08];
-const PAYOUT_DAYS = [1, 5, 10, 15, 20, 25];
+const PAYOUT_DAYS = [1, 5, 10, 15, 20, 25] as const;
 const REFERRAL_RATE_OPTIONS = [0.005, 0.01, 0.015, 0.02, 0.025, 0.03, 0.05];
+
+type PayoutDay = (typeof PAYOUT_DAYS)[number];
+
+function isPayoutDay(value: number | null | undefined): value is PayoutDay {
+  return value != null && (PAYOUT_DAYS as readonly number[]).includes(value);
+}
+
+/** Soonest cycle day on or after this calendar day. After the 25th, the 1st. */
+function nextCycleDay(dayOfMonth: number): PayoutDay {
+  return PAYOUT_DAYS.find((day) => day >= dayOfMonth) ?? 1;
+}
+
+function kolkataTodayIso(date = new Date()): string {
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
+}
+
+/** Cycle is the next payout day on or after the invested date. After the 25th, the 1st. */
+function cycleDayForInvestedDate(investedIso: string | null): PayoutDay {
+  const iso = investedIso && /^\d{4}-\d{2}-\d{2}/.test(investedIso) ? investedIso.slice(0, 10) : kolkataTodayIso();
+  const day = Number(iso.slice(8, 10));
+  return nextCycleDay(Number.isFinite(day) ? day : kolkataDayOfMonth());
+}
+
+function kolkataDayOfMonth(date = new Date()): number {
+  return Number(kolkataTodayIso(date).slice(8, 10));
+}
+
+function nextPayDateIso(investedIso: string | null, cycleDay: number): string {
+  const iso =
+    investedIso && /^\d{4}-\d{2}-\d{2}/.test(investedIso) ? investedIso.slice(0, 10) : kolkataTodayIso();
+  const year = Number(iso.slice(0, 4));
+  const month = Number(iso.slice(5, 7));
+  const day = Number(iso.slice(8, 10));
+  let payYear = year;
+  let payMonth = month;
+  if (day > cycleDay) {
+    payMonth += 1;
+    if (payMonth > 12) {
+      payMonth = 1;
+      payYear += 1;
+    }
+  }
+  return `${payYear}-${String(payMonth).padStart(2, '0')}-${String(cycleDay).padStart(2, '0')}`;
+}
 
 function roundMoney(value: number): number {
   return Math.round(value * 100) / 100;
@@ -71,7 +121,18 @@ export function InvestmentReviewPage() {
   }, [requestId]);
 
   const editable = detail?.status === 'Pending' || detail?.status === 'Under Review';
-  const payoutDay = detail?.payout_day ?? 10;
+  const storedPayoutDay = isPayoutDay(detail?.payout_day) ? detail.payout_day : null;
+  // Pay date always follows the invested date. The old column default of the 10th
+  // is not a selection, even if it was stored on insert.
+  const investedIso = detail?.invested_date ?? null;
+  const automaticPayoutDay = cycleDayForInvestedDate(investedIso);
+  const adminChoseDay =
+    Boolean(detail?.payout_day_overridden) &&
+    storedPayoutDay != null &&
+    storedPayoutDay !== automaticPayoutDay &&
+    storedPayoutDay !== 10;
+  const payoutDay = adminChoseDay ? storedPayoutDay : automaticPayoutDay;
+  const payDateIso = nextPayDateIso(investedIso, payoutDay ?? automaticPayoutDay);
   const referralRate = detail?.referral_rate ?? 0.01;
   const hasReferrer = Boolean(detail?.referrer_user_id || detail?.referrer_name);
 
@@ -98,8 +159,8 @@ export function InvestmentReviewPage() {
   async function persistTerms(
     rate: number,
     tds: number,
-    day: number,
-    nextReferralRate: number = referralRate
+    nextReferralRate: number = referralRate,
+    payoutDayToSave: number | null = null
   ) {
     if (!detail || !editable) {
       return;
@@ -107,13 +168,15 @@ export function InvestmentReviewPage() {
     setSaving(true);
     setError(null);
     try {
-      await updateInvestmentTerms(detail.id, rate, tds, day, nextReferralRate);
+      await updateInvestmentTerms(detail.id, rate, tds, payoutDayToSave, nextReferralRate);
       setDetail({
         ...detail,
         interest_rate: rate,
         tds_percent: tds,
-        payout_day: day,
         referral_rate: nextReferralRate,
+        ...(payoutDayToSave
+          ? { payout_day: payoutDayToSave, payout_day_overridden: true }
+          : {}),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Could not save terms');
@@ -302,6 +365,11 @@ export function InvestmentReviewPage() {
                   <span>FUNDING AMOUNT</span>
                   <strong>{formatInr(detail.fund_amount)}</strong>
                 </div>
+                <div className="detail-field">
+                  <span>INVESTED DATE</span>
+                  <strong>{formatDate(investedIso || kolkataTodayIso())}</strong>
+                  {!investedIso ? <p>Recorded as today when this request is approved.</p> : null}
+                </div>
               </div>
               <div className="linked-bank">
                 <span>LINKED BANK ACCOUNT</span>
@@ -336,7 +404,7 @@ export function InvestmentReviewPage() {
                 checked={detail.tds_percent > 0}
                 disabled={!editable || saving}
                 onChange={(event) =>
-                  void persistTerms(detail.interest_rate, event.target.checked ? 0.1 : 0, payoutDay)
+                  void persistTerms(detail.interest_rate, event.target.checked ? 0.1 : 0)
                 }
               />
             </label>
@@ -352,7 +420,6 @@ export function InvestmentReviewPage() {
                     void persistTerms(
                       detail.interest_rate,
                       detail.tds_percent,
-                      payoutDay,
                       Number(event.target.value)
                     )
                   }
@@ -383,7 +450,7 @@ export function InvestmentReviewPage() {
                 value={detail.interest_rate}
                 disabled={!editable || saving}
                 onChange={(event) =>
-                  void persistTerms(Number(event.target.value), detail.tds_percent, payoutDay)
+                  void persistTerms(Number(event.target.value), detail.tds_percent)
                 }
               >
                 {RATE_OPTIONS.map((rate) => (
@@ -404,12 +471,19 @@ export function InvestmentReviewPage() {
                     type="button"
                     className={payoutDay === day ? 'active' : ''}
                     disabled={!editable || saving}
-                    onClick={() => void persistTerms(detail.interest_rate, detail.tds_percent, day)}
+                    onClick={() => {
+                      if (day === payoutDay) return;
+                      void persistTerms(detail.interest_rate, detail.tds_percent, referralRate, day);
+                    }}
                   >
                     {day === 1 ? '1st' : `${day}th`}
                   </button>
                 ))}
               </div>
+              <p className="muted" style={{ marginTop: 8 }}>
+                Next pay date {formatDate(payDateIso)}, from invested date{' '}
+                {formatDate(investedIso || kolkataTodayIso())}.
+              </p>
             </div>
 
             <div className="accrual-preview">

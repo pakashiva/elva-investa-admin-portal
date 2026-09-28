@@ -118,7 +118,9 @@ export async function getInvestmentRequest(
     fund_amount: asNumber(row.fund_amount),
     interest_rate: asNumber(row.interest_rate),
     tds_percent: asNumber(row.tds_percent),
-    payout_day: asPayoutDay(row.payout_day),
+    payout_day: asPayoutDayOrNull(row.payout_day),
+    payout_day_overridden: asBoolean(row.payout_day_overridden),
+    invested_date: row.invested_date ? String(row.invested_date).slice(0, 10) : null,
     created_at: String(row.created_at ?? ''),
     user_id: String(row.user_id ?? ''),
     customer_name: String(row.customer_name ?? ''),
@@ -193,19 +195,30 @@ export async function getAgreementRenewal(id: string): Promise<AgreementRenewalD
 
 const PAYOUT_DAY_OPTIONS = [1, 5, 10, 15, 20, 25] as const;
 
+function asBoolean(value: unknown): boolean {
+  return value === true || value === 'true' || value === 't' || value === 1 || value === '1';
+}
+
 function asPayoutDay(value: unknown): number {
+  return asPayoutDayOrNull(value) ?? 10;
+}
+
+function asPayoutDayOrNull(value: unknown): number | null {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
   const parsed = Number(value);
   if (PAYOUT_DAY_OPTIONS.includes(parsed as (typeof PAYOUT_DAY_OPTIONS)[number])) {
     return parsed;
   }
-  return 10;
+  return null;
 }
 
 export async function updateInvestmentTerms(
   id: string,
   interestRate: number,
   tdsPercent: number,
-  payoutDay: number,
+  payoutDay: number | null = null,
   referralRate: number = 0.01
 ): Promise<void> {
   const { error } = await supabase.rpc('admin_update_investment_terms', {

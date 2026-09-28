@@ -83,7 +83,7 @@ function toForm(detail: ApprovedInvestmentEdit): FormState {
     fundAmount: String(detail.fund_amount || ''),
     interestRate: detail.interest_rate || 0.05,
     tdsPercent: detail.tds_percent > 0 ? 0.1 : 0,
-    payoutDay: detail.payout_day || 10,
+    payoutDay: detail.payout_day || 1,
     bankName: detail.bank?.bank_name ?? '',
     accountNumber: detail.bank?.account_number ?? '',
     ifscCode: detail.bank?.ifsc_code ?? '',

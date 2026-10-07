@@ -5,6 +5,7 @@ import { ErrorBanner } from '../components/States';
 import { usePortalSettings } from '../hooks/usePortalSettings';
 import type { AdminOutletContext } from '../layouts/AdminLayout';
 import type { PortalSettings } from '../types/admin';
+import { PasswordInput } from '../components/PasswordInput';
 
 type FormState = Omit<PortalSettings, 'updated_at'>;
 
@@ -218,9 +219,8 @@ export function SettingsPage() {
 
             <label className="settings-field">
               <span>API Key</span>
-              <input
+              <PasswordInput
                 className="settings-input"
-                type="password"
                 autoComplete="off"
                 value={form.api_key}
                 onChange={(event) => updateField('api_key', event.target.value)}
@@ -229,9 +229,8 @@ export function SettingsPage() {
 
             <label className="settings-field">
               <span>API Secret</span>
-              <input
+              <PasswordInput
                 className="settings-input"
-                type="password"
                 autoComplete="off"
                 value={form.api_secret}
                 onChange={(event) => updateField('api_secret', event.target.value)}
